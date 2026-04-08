@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MC Companion">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>Minecraft Companion</title>
+<style>
+:root{
+  --green:#1D9E75;--green-light:#E1F5EE;
+  --blue:#185FA5;--blue-light:#E6F1FB;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --purple:#534AB7;--purple-light:#EEEDFE;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#eeede9;
+  --text:#1a1a18;--text2:#666660;--text3:#999990;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){:root{
+  --green:#5DCAA5;--green-light:#04342C;
+  --blue:#85B7EB;--blue-light:#042C53;
+  --amber:#FAC775;--amber-light:#412402;
+  --purple:#AFA9EC;--purple-light:#26215C;
+  --red:#F09595;--red-light:#501313;
+  --teal:#9FE1CB;--teal-light:#085041;
+  --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+  --text:#f2f2f7;--text2:#aeaeb2;--text3:#6e6e73;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);
+}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+.tab-bar{display:flex;border-bottom:0.5px solid var(--border2);background:var(--bg);padding-top:var(--safe-top);flex-shrink:0}
+.tab-btn{flex:1;padding:12px 2px 10px;font-size:11px;font-weight:500;color:var(--text3);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:inherit;line-height:1.3}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-pane{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.tab-pane.active{display:flex}
+
+/* ── shared header ── */
+.hd{background:var(--bg);border-bottom:0.5px solid var(--border2);padding:12px 16px 0;flex-shrink:0}
+.hd-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hd-title{font-size:17px;font-weight:600}
+.hd-sub{font-size:11px;color:var(--text2)}
+.reset-btn{font-size:13px;color:var(--text3);background:none;border:none;cursor:pointer;padding:4px 0;font-family:inherit}
+.prog-wrap{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.prog-bar-outer{flex:1;height:8px;background:var(--bg3);border-radius:999px;overflow:hidden}
+.prog-bar-inner{height:100%;background:var(--green);border-radius:999px;transition:width .3s}
+.prog-label{font-size:12px;font-weight:600;color:var(--text2);min-width:56px;text-align:right}
+.filters{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.f-btn{flex-shrink:0;font-size:12px;padding:5px 12px;border-radius:999px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s}
+.f-btn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.list-wrap{flex:1;overflow-y:auto;padding:0 16px calc(var(--safe-bottom)+20px);-webkit-overflow-scrolling:touch;min-height:0}
+
+/* ── checklist ── */
+.phase-hd{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:18px 0 5px;border-bottom:0.5px solid var(--border);margin-bottom:2px}
+.item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border);cursor:pointer;user-select:none}
+.item:active{opacity:.7}
+.item:last-child{border-bottom:none}
+.cb{width:22px;height:22px;min-width:22px;border-radius:6px;border:1.5px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s}
+.cb.done{background:var(--green);border-color:var(--green)}
+.cb.done::after{content:'';display:block;width:6px;height:11px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg) translate(-1px,-1px)}
+.item-body{flex:1;min-width:0}
+.item-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.3;display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+.done-text{text-decoration:line-through;opacity:.42}
+.item-hint{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4}
+.badge{font-size:10px;font-weight:600;padding:2px 6px;border-radius:999px;white-space:nowrap}
+.b-c{background:var(--amber-light);color:var(--amber)}
+.b-g{background:var(--blue-light);color:var(--blue)}
+.b-h{background:var(--purple-light);color:var(--purple)}
+
+/* ── challenge guide ── */
+.guide-hd{background:var(--bg);border-bottom:0.5px solid var(--border2);padding:10px 16px;flex-shrink:0}
+.search-input{width:100%;padding:9px 14px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;font-family:inherit;outline:none;margin-top:8px}
+.search-input:focus{border-color:var(--green)}
+.guide-wrap{flex:1;overflow-y:auto;padding:10px 16px calc(var(--safe-bottom)+20px);-webkit-overflow-scrolling:touch;min-height:0}
+.chal-card{border:0.5px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:10px;background:var(--bg)}
+.chal-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.chal-header:active{opacity:.7}
+.c-cb{width:20px;height:20px;min-width:20px;border-radius:5px;border:1.5px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.c-cb.done{background:var(--green);border-color:var(--green)}
+.c-cb.done::after{content:'';display:block;width:5px;height:9px;border-right:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(45deg) translate(-1px,-1px)}
+.c-title-wrap{flex:1;min-width:0}
+.c-title{font-size:14px;font-weight:600;color:var(--text)}
+.c-meta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px}
+.chev{color:var(--text3);font-size:10px;transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(180deg)}
+.chal-body{display:none;border-top:0.5px solid var(--border);padding:12px 14px 14px;background:var(--bg2)}
+.chal-body.open{display:block}
+.c-desc{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:10px}
+.sec-title{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.req-list{list-style:none;margin-bottom:12px}
+.req-list li{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text);line-height:1.4;cursor:pointer}
+.req-list li:last-child{border-bottom:none}
+.req-list li:active{opacity:.7}
+.r-cb{width:18px;height:18px;min-width:18px;border-radius:4px;border:1.5px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s;flex-shrink:0}
+.r-cb.done{background:var(--green);border-color:var(--green)}
+.r-cb.done::after{content:'';display:block;width:4px;height:8px;border-right:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(45deg) translate(-1px,-1px)}
+.r-text{flex:1}
+.tip-box{background:var(--amber-light);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber);line-height:1.5}
+.diff-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.diff-hard{background:var(--red-light);color:var(--red)}
+.diff-medium{background:var(--amber-light);color:var(--amber)}
+.diff-easy{background:var(--green-light);color:var(--green)}
+
+/* ── crafting tab ── */
+.craft-hd{background:var(--bg);border-bottom:0.5px solid var(--border2);padding:10px 16px;flex-shrink:0}
+.craft-filters{display:flex;gap:5px;overflow-x:auto;padding:8px 0 0;scrollbar-width:none;padding-bottom:10px}
+.craft-filters::-webkit-scrollbar{display:none}
+.craft-wrap{flex:1;overflow-y:auto;padding:8px 16px calc(var(--safe-bottom)+20px);min-height:0}
+.craft-section-hd{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:14px 0 6px;border-bottom:0.5px solid var(--border);margin-bottom:4px}
+.craft-card{border:0.5px solid var(--border2);border-radius:10px;overflow:hidden;margin-bottom:8px;background:var(--bg)}
+.craft-hdr{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;user-select:none}
+.craft-hdr:active{opacity:.7}
+.craft-emoji{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.craft-name-wrap{flex:1;min-width:0}
+.craft-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.2}
+.craft-yields{font-size:11px;color:var(--text3);margin-top:1px}
+.craft-body{display:none;border-top:0.5px solid var(--border);padding:10px 12px 12px;background:var(--bg2)}
+.craft-body.open{display:block}
+.craft-station{font-size:11px;color:var(--teal);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.craft-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:180px;margin-bottom:10px}
+.craft-cell{height:44px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text2)}
+.craft-cell.filled{background:var(--bg3);color:var(--text)}
+.craft-cell-label{font-size:8px;text-align:center;color:var(--text3);margin-top:2px;line-height:1.2}
+.craft-grid-wrap{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.craft-arrow{font-size:18px;color:var(--text3);align-self:center;padding-top:2px}
+.craft-result{text-align:center}
+.craft-result-cell{width:52px;height:52px;border:1px solid var(--green);border-radius:8px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 4px}
+.craft-result-label{font-size:11px;font-weight:600;color:var(--text);text-align:center}
+.craft-result-qty{font-size:10px;color:var(--text3)}
+.craft-ingredients{font-size:12px;color:var(--text2);line-height:1.7}
+.craft-ingredients strong{color:var(--text);font-weight:500}
+.craft-note{font-size:11px;color:var(--text3);font-style:italic;margin-top:6px;line-height:1.4}
+.empty{text-align:center;color:var(--text3);font-size:14px;padding:40px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="checklist">✅<br>Checklist</button>
+    <button class="tab-btn" data-tab="guide">⚔️<br>Challenges</button>
+    <button class="tab-btn" data-tab="crafting">🔨<br>Crafting</button>
+  </div>
+
+  <!-- ══════════ CHECKLIST ══════════ -->
+  <div class="tab-pane active" id="pane-checklist">
+    <div class="hd">
+      <div class="hd-row1">
+        <div><div class="hd-title">MC Advancements</div><div class="hd-sub">125 advancements · ordered by progression</div></div>
+        <button class="reset-btn" id="resetBtn">Reset all</button>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar-outer"><div class="prog-bar-inner" id="bar"></div></div>
+        <div class="prog-label" id="prog">0 / 125</div>
+      </div>
+      <div class="filters">
+        <button class="f-btn active" data-f="all">All</button>
+        <button class="f-btn" data-f="remaining">Remaining</button>
+        <button class="f-btn" data-f="done">Done</button>
+        <button class="f-btn" data-f="challenge">Challenges</button>
+        <button class="f-btn" data-f="goal">Goals</button>
+        <button class="f-btn" data-f="hidden">Hidden</button>
+      </div>
+    </div>
+    <div class="list-wrap" id="listWrap"></div>
+  </div>
+
+  <!-- ══════════ CHALLENGE GUIDE ══════════ -->
+  <div class="tab-pane" id="pane-guide">
+    <div class="guide-hd">
+      <div class="hd-row1">
+        <div><div class="hd-title">Challenge Guide</div><div class="hd-sub">Requirements & tips for every challenge</div></div>
+      </div>
+      <input class="search-input" id="guideSearch" type="search" placeholder="Search challenges…">
+    </div>
+    <div class="guide-wrap" id="guideWrap"></div>
+  </div>
+
+  <!-- ══════════ CRAFTING REFERENCE ══════════ -->
+  <div class="tab-pane" id="pane-crafting">
+    <div class="craft-hd">
+      <div class="hd-row1">
+        <div><div class="hd-title">Crafting Reference</div><div class="hd-sub">Tap any item to see its recipe</div></div>
+      </div>
+      <input class="search-input" id="craftSearch" type="search" placeholder="Search recipes…">
+      <div class="craft-filters" id="craftFilters">
+        <button class="f-btn active" data-cf="all">All</button>
+        <button class="f-btn" data-cf="tools">Tools</button>
+        <button class="f-btn" data-cf="weapons">Weapons</button>
+        <button class="f-btn" data-cf="armor">Armor</button>
+        <button class="f-btn" data-cf="blocks">Blocks</button>
+        <button class="f-btn" data-cf="food">Food</button>
+        <button class="f-btn" data-cf="redstone">Redstone</button>
+        <button class="f-btn" data-cf="utility">Utility</button>
+        <button class="f-btn" data-cf="decorative">Decorative</button>
+        <button class="f-btn" data-cf="misc">Misc</button>
+      </div>
+    </div>
+    <div class="craft-wrap" id="craftWrap"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const AKEY='mc_adv_v3',RKEY='mc_req_v3';
+let checked={},reqChecked={};
+try{checked=JSON.parse(localStorage.getItem(AKEY)||'{}');}catch(e){}
+try{reqChecked=JSON.parse(localStorage.getItem(RKEY)||'{}');}catch(e){}
+function saveAdv(){try{localStorage.setItem(AKEY,JSON.stringify(checked));}catch(e){}}
+function saveReq(){try{localStorage.setItem(RKEY,JSON.stringify(reqChecked));}catch(e){}}
+
+/* ── Advancement phases ── */
+const phases=[
+  {label:"Phase 1 — First day survival",items:[
+    {n:"Minecraft",h:"Craft a crafting table and have it in your inventory"},
+    {n:"Stone Age",h:"Mine cobblestone, blackstone, or cobbled deepslate"},
+    {n:"Getting an Upgrade",h:"Craft a stone pickaxe"},
+    {n:"Sweet Dreams",h:"Lie down in a bed at night"},
+    {n:"Monster Hunter",h:"Kill any hostile mob — zombies at night are easiest"},
+    {n:"Adventure",h:"Kill any entity or get killed by any entity"},
+  ]},
+  {label:"Phase 2 — Iron age & basic gear",items:[
+    {n:"Acquire Hardware",h:"Get an iron ingot (smelt iron ore)"},
+    {n:"Isn't It Iron Pick",h:"Craft an iron pickaxe"},
+    {n:"Suit Up",h:"Put on any piece of iron armor"},
+    {n:"Not Today, Thank You",h:"Block any projectile with a shield"},
+    {n:"Hot Stuff",h:"Fill a bucket with lava"},
+    {n:"A Seedy Place",h:"Plant a seed on farmland near water",t:"hus"},
+    {n:"The Parrots and the Bats",h:"Breed any two matching animals",t:"hus"},
+    {n:"Husbandry",h:"Eat any food item",t:"hus"},
+  ]},
+  {label:"Phase 3 — Diamonds & enchanting",items:[
+    {n:"Ice Bucket Challenge",h:"Obtain a block of obsidian (lava + water)"},
+    {n:"Diamonds!",h:"Find or mine a diamond (best around Y = -58)"},
+    {n:"Cover Me with Diamonds",h:"Wear any piece of diamond armor"},
+    {n:"Enchanter",h:"Enchant any item at an enchanting table"},
+    {n:"Best Friends Forever!",h:"Tame any animal — wolf (bones), cat (fish), horse (apples)",t:"hus"},
+    {n:"Isn't It Scute?",h:"Brush an armadillo to get a scute — armadillos in savannas"},
+    {n:"Light as a Rabbit",h:"Walk on powder snow wearing leather boots"},
+  ]},
+  {label:"Phase 4 — Villages & overworld combat",items:[
+    {n:"What a Deal!",h:"Trade emeralds with any villager or wandering trader"},
+    {n:"Crafting a New Look",h:"Apply any armor trim smithing template to armor"},
+    {n:"Who's the Pillager Now?",h:"Kill a pillager using a crossbow"},
+    {n:"Ol' Betsy",h:"Fire any projectile from a crossbow"},
+    {n:"Voluntary Exile",h:"Kill a raid captain wearing an ominous banner",t:"hidden"},
+    {n:"Surge Protector",h:"Place a lightning rod near villagers during a thunderstorm"},
+    {n:"Very Very Frightening",h:"Strike a villager with lightning using a channeling trident"},
+    {n:"Hired Help",h:"Spawn an iron golem — 4 iron blocks T-shape + carved pumpkin",t:"goal"},
+    {n:"Hero of the Village",h:"Fend off a complete illager raid",t:"challenge"},
+    {n:"Star Trader",h:"Trade with a villager or wandering trader above Y = 318"},
+    {n:"Postmortal",h:"Survive death using a totem of undying in your hand",t:"goal"},
+  ]},
+  {label:"Phase 5 — Exploration & caves",items:[
+    {n:"Take Aim",h:"Shoot any entity with a bow or crossbow"},
+    {n:"A Throwaway Joke",h:"Hit any mob with a thrown trident"},
+    {n:"Sneak 100",h:"Sneak near a sculk sensor or Warden without triggering it"},
+    {n:"It Spreads",h:"Kill a mob near a sculk catalyst",t:"challenge"},
+    {n:"Respecting the Remnants",h:"Brush suspicious sand/gravel to reveal a pottery sherd"},
+    {n:"Careful Restoration",h:"Craft a decorated pot from 4 pottery sherds"},
+    {n:"Sticky Situation",h:"Slide into the side of a honey block while falling"},
+    {n:"Is it a Bird?",h:"Look at a parrot through a spyglass"},
+    {n:"Caves & Cliffs",h:"Fall from Y=319 to Y=-59 — place water at the bottom!"},
+    {n:"Sniper Duel",h:"Kill a skeleton with an arrow from 50+ blocks away",t:"challenge"},
+    {n:"Bullseye",h:"Hit the center of a target block from 30+ blocks away",t:"challenge"},
+    {n:"Sound of Music",h:"Play a music disc in a jukebox while in a meadow biome"},
+    {n:"The Power of Books",h:"Use a comparator to read signal from a chiseled bookshelf"},
+    {n:"Adventuring Time",h:"Visit every Overworld biome — 42 biomes total",t:"challenge"},
+    {n:"Minecraft: Trial(s) Edition",h:"Find and enter a trial chamber"},
+    {n:"Under Lock and Key",h:"Open a vault in a trial chamber with a trial key"},
+    {n:"Revaulting",h:"Use an ominous trial key on an ominous vault"},
+    {n:"Who Needs Rockets?",h:"Use a wind charge to launch yourself 8 blocks up"},
+    {n:"Lighten Up",h:"Scrape a copper bulb with an axe"},
+    {n:"Crafters Crafting Crafters",h:"Let a crafter block craft another crafter"},
+    {n:"Is It a Balloon?",h:"Look at a ghast through a spyglass while it watches you"},
+  ]},
+  {label:"Phase 6 — Nether preparation",items:[
+    {n:"We Need to Go Deeper",h:"Build and enter a Nether portal"},
+    {n:"Eye Spy",h:"Follow an Eye of Ender to a stronghold and enter it"},
+  ]},
+  {label:"Phase 7 — Nether exploration",items:[
+    {n:"Nether",h:"Enter the Nether dimension"},
+    {n:"A Terrible Fortress",h:"Find and enter a Nether fortress"},
+    {n:"Into Fire",h:"Kill a blaze and pick up a blaze rod"},
+    {n:"Local Brewery",h:"Take any item from a brewing stand output slot"},
+    {n:"Spooky Scary Skeleton",h:"Get a wither skeleton skull — rare drop, kill many"},
+    {n:"Those Were the Days",h:"Find and enter a bastion remnant"},
+    {n:"War Pigs",h:"Open a natural chest in a bastion remnant"},
+    {n:"Oh Shiny",h:"Distract a piglin with any gold item"},
+    {n:"This Boat Has Legs",h:"Saddle a strider and ride it with a warped fungus on a stick"},
+    {n:"Who is Cutting Onions?",h:"Obtain crying obsidian"},
+    {n:"Country Lode, Take Me Home",h:"Use a compass on a placed lodestone"},
+    {n:"Hidden in the Depths",h:"Mine ancient debris with a diamond pickaxe"},
+    {n:"Not Quite 'Nine' Lives",h:"Fully charge a respawn anchor with 4 glowstone"},
+    {n:"Hot Tourist Destinations",h:"Visit all 5 Nether biomes",t:"challenge"},
+    {n:"Subspace Bubble",h:"Travel 7000+ Overworld blocks via the Nether",t:"challenge"},
+    {n:"Uneasy Alliance",h:"Kill a ghast in the Overworld",t:"challenge"},
+    {n:"Return to Sender",h:"Kill a ghast by deflecting its own fireball",t:"challenge"},
+    {n:"Feels Like Home",h:"Ride a strider 50 blocks straight on Overworld lava"},
+    {n:"A Furious Cocktail",h:"Have every potion effect active at once",t:"challenge"},
+    {n:"How Did We Get Here?",h:"Have EVERY status effect simultaneously — hardest in the game",t:"challenge"},
+  ]},
+  {label:"Phase 8 — Netherite & beacons",items:[
+    {n:"Cover Me in Debris",h:"Craft and wear a full set of netherite armor",t:"challenge"},
+    {n:"Withering Heights",h:"Summon the Wither"},
+    {n:"Bring Home the Beacon",h:"Place and activate a beacon"},
+    {n:"Beaconator",h:"Power a full beacon pyramid (164 blocks)",t:"goal"},
+  ]},
+  {label:"Phase 9 — The End & Ender Dragon",items:[
+    {n:"The End?",h:"Activate the End portal and enter it"},
+    {n:"The End",h:"Set foot in the End dimension"},
+    {n:"Free the End",h:"Kill the Ender Dragon"},
+    {n:"The Next Generation",h:"Pick up the dragon egg",t:"goal"},
+    {n:"You Need a Mint",h:"Collect dragon's breath in a glass bottle",t:"goal"},
+    {n:"Remote Gateway",h:"Enter an end gateway via ender pearl"},
+    {n:"The City at the End of the Game",h:"Find and enter an End City"},
+    {n:"Sky's the Limit",h:"Pick up elytra from an End City ship",t:"goal"},
+    {n:"The End… Again…",h:"Respawn the Ender Dragon with 4 end crystals",t:"goal"},
+    {n:"Great View From Up Here",h:"Rise 50 blocks while levitated by a shulker",t:"challenge"},
+    {n:"Is It a Plane?",h:"Look at the Ender Dragon through a spyglass"},
+  ]},
+  {label:"Phase 10 — Husbandry & farming",items:[
+    {n:"A Balanced Diet",h:"Eat every type of food in the game — 39+ foods total",t:"challenge"},
+    {n:"Fishy Business",h:"Catch a fish using a fishing rod"},
+    {n:"Tactical Fishing",h:"Catch a fish using a bucket"},
+    {n:"The Cutest Predator",h:"Catch an axolotl in a water bucket"},
+    {n:"Bukkit Bukkit",h:"Catch a tadpole in a water bucket"},
+    {n:"Wax On",h:"Use a honeycomb on a copper block to wax it"},
+    {n:"Wax Off",h:"Scrape the wax off a waxed copper block with an axe"},
+    {n:"Two by Two",h:"Breed all 19 breedable animal types",t:"challenge"},
+    {n:"Total Beelocation",h:"Move a beehive with 3 bees inside using Silk Touch"},
+    {n:"A Complete Catalogue",h:"Tame all 11 cat variants",t:"goal"},
+    {n:"With Our Powers Combined!",h:"Let a charged creeper kill another mob"},
+    {n:"Planting the Past",h:"Plant one of every seed type in a flower pot"},
+    {n:"Little Sniffs",h:"Feed a torchflower seed to a sniffer"},
+    {n:"When the Squad's Laughing",h:"Breed a snifflet (two sniffers + torchflower seed)"},
+    {n:"You've Got a Friend in Me",h:"Have an allay return a picked up item to you"},
+    {n:"Birthday Song",h:"Have an allay drop a cake next to a playing note block"},
+    {n:"Serious Dedication",h:"Completely wear out a diamond hoe",t:"challenge"},
+  ]},
+  {label:"Phase 11 — Combat completionist",items:[
+    {n:"Monsters Hunted",h:"Kill at least one of every hostile mob type",t:"challenge"},
+    {n:"Two Birds, One Arrow",h:"Kill 2 phantoms with one piercing crossbow bolt",t:"challenge"},
+    {n:"Arbalistic",h:"Kill 5 different mob types with one piercing crossbow shot",t:"challenge"},
+    {n:"Smithing with Style",h:"Apply all 8 rare armor trims",t:"challenge"},
+    {n:"A Throwaway Joke (undead variant)",h:"Throw a trident at any mob to cover remaining variants"},
+  ]},
+];
+
+/* ── Challenge data ── */
+const challenges=[
+  {id:"hero",name:"Hero of the Village",diff:"medium",desc:"Fend off a complete illager raid. Triggered by entering a village with Bad Omen (from killing a raid captain).",reqs:[{id:"h1",text:"Iron sword or better"},{id:"h2",text:"Full iron armor minimum — diamond preferred"},{id:"h3",text:"Shield — raids include ranged pillagers"},{id:"h4",text:"Bow + 64+ arrows"},{id:"h5",text:"Plenty of food for healing"},{id:"h6",text:"Kill a raid captain first to get Bad Omen"},{id:"h7",text:"Find a village with iron golems — they fight for you"},{id:"h8",text:"Enter the village with Bad Omen to start the raid"},{id:"h9",text:"Survive all 5–7 waves of pillagers, vindicators, evokers, ravagers"}],tip:"Iron golems tank for you. Evokers drop totems of undying — grab them. Bring a totem in your offhand as insurance."},
+  {id:"itsp",name:"It Spreads",diff:"easy",desc:"Kill any XP-dropping mob near a sculk catalyst block.",reqs:[{id:"is1",text:"Find deep dark biome — under mountains at Y = -50 or lower"},{id:"is2",text:"Locate a sculk catalyst (black blob with particles)"},{id:"is3",text:"Lure any mob near it (lead a zombie down)"},{id:"is4",text:"Kill the mob within range of the catalyst"}],tip:"Sneak the whole time. Don't sprint. You don't need to fight the Warden — just kill a zombie next to the catalyst."},
+  {id:"sniper",name:"Sniper Duel",diff:"medium",desc:"Kill a skeleton with an arrow from 50+ horizontal blocks away.",reqs:[{id:"sn1",text:"Bow — Power enchantment recommended"},{id:"sn2",text:"32+ arrows"},{id:"sn3",text:"Find a skeleton on flat terrain at night"},{id:"sn4",text:"Count 50+ blocks between you and it"},{id:"sn5",text:"Aim above the skeleton — arrows drop over distance"}],tip:"Flat desert or plains works best. Aim 1–2 blocks above the skeleton's head at 50-block range."},
+  {id:"bull",name:"Bullseye",diff:"medium",desc:"Hit the exact center of a target block with an arrow from 30+ horizontal blocks away.",reqs:[{id:"bu1",text:"Craft target block: 4 redstone dust + 1 hay bale"},{id:"bu2",text:"Bow + many arrows — takes practice"},{id:"bu3",text:"Place target at eye level on flat ground"},{id:"bu4",text:"Stand exactly 30+ blocks away"},{id:"bu5",text:"Aim slightly above center for arrow drop"}],tip:"Mark your 30-block spot. Aim half a block above the center ring. The bullseye gives a redstone signal of 15."},
+  {id:"advtime",name:"Adventuring Time",diff:"hard",desc:"Visit every single Overworld biome (42+ required).",reqs:[{id:"at1",text:"Elytra + firework rockets — essential for fast travel"},{id:"at2",text:"Full enchanted armor"},{id:"at3",text:"Stacks of food"},{id:"at4",text:"Use Chunkbase.com with your world seed to locate rare biomes"},{id:"at5",text:"Plains, Sunflower Plains, Meadow, Forest, Flower Forest"},{id:"at6",text:"Birch Forest, Old Growth Birch Forest, Dark Forest"},{id:"at7",text:"Jungle, Sparse Jungle, Bamboo Jungle"},{id:"at8",text:"Taiga, Old Growth Pine Taiga, Old Growth Spruce Taiga, Snowy Taiga"},{id:"at9",text:"Savanna, Savanna Plateau, Windswept Savanna"},{id:"at10",text:"Desert, Badlands, Eroded Badlands, Wooded Badlands"},{id:"at11",text:"Swamp, Mangrove Swamp"},{id:"at12",text:"Beach, Snowy Beach, Stony Shore, River, Frozen River"},{id:"at13",text:"Ocean, Deep Ocean, Cold Ocean, Deep Cold Ocean"},{id:"at14",text:"Lukewarm Ocean, Deep Lukewarm Ocean, Warm Ocean"},{id:"at15",text:"Frozen Ocean, Deep Frozen Ocean"},{id:"at16",text:"Snowy Plains, Ice Spikes"},{id:"at17",text:"Windswept Hills, Windswept Gravelly Hills, Windswept Forest"},{id:"at18",text:"Jagged Peaks, Frozen Peaks, Stony Peaks, Grove, Snowy Slopes"},{id:"at19",text:"Cherry Grove, Pale Garden"},{id:"at20",text:"Mushroom Fields, Dripstone Caves, Lush Caves, Deep Dark"}],tip:"Rarest biomes: Ice Spikes, Mushroom Fields, Pale Garden, Eroded Badlands, Bamboo Jungle. Use Chunkbase.com to find them by seed. Press L to check your biome progress."},
+  {id:"hottur",name:"Hot Tourist Destinations",diff:"easy",desc:"Visit all 5 Nether biomes.",reqs:[{id:"ht1",text:"Active Nether portal"},{id:"ht2",text:"Fire resistance potions"},{id:"ht3",text:"Full gold armor (piglins ignore you)"},{id:"ht4",text:"Nether Wastes — default spawn, orange/red"},{id:"ht5",text:"Crimson Forest — bright red mushroom trees"},{id:"ht6",text:"Warped Forest — teal/blue mushroom trees"},{id:"ht7",text:"Soul Sand Valley — pale blue, bone columns"},{id:"ht8",text:"Basalt Deltas — grey/black columns, lots of lava"}],tip:"Soul Sand Valley and Basalt Deltas are rarest. Fly along the Nether ceiling to search wide."},
+  {id:"sub",name:"Subspace Bubble",diff:"easy",desc:"Travel 7,000+ Overworld blocks via the Nether (875 Nether blocks).",reqs:[{id:"sb1",text:"First Nether portal at base"},{id:"sb2",text:"Travel 875+ blocks in a straight line inside the Nether"},{id:"sb3",text:"Build second portal at that Nether location"},{id:"sb4",text:"Exit through the second portal to confirm distance"}],tip:"1 Nether block = 8 Overworld blocks. Just walk far in a straight tunnel and build a portal."},
+  {id:"uneasy",name:"Uneasy Alliance",diff:"hard",desc:"Kill a ghast in the Overworld — you must lure one through a portal.",reqs:[{id:"ua1",text:"Build very large Nether portal — 5+ wide × 5+ tall inside"},{id:"ua2",text:"Build in open Nether area where ghasts fly nearby"},{id:"ua3",text:"Aggro a ghast so it tracks you"},{id:"ua4",text:"Stand in the portal and wait for the ghast to float through"},{id:"ua5",text:"Kill the ghast on the Overworld side with a bow"},{id:"ua6",text:"Have open space on Overworld side — ghasts destroy terrain!"},{id:"ua7",text:"Fire resistance potions for safety"}],tip:"Make the portal opening at least 5×5. Ghasts are huge and slow — this takes many attempts. Pre-damage it in the Nether, lure it through, finish it quickly."},
+  {id:"rts",name:"Return to Sender",diff:"medium",desc:"Kill a ghast by deflecting its own fireball back at it.",reqs:[{id:"rt1",text:"Find a ghast in the Nether (no special gear needed)"},{id:"rt2",text:"Wait for it to shoot a fireball"},{id:"rt3",text:"Spam left-click as the fireball approaches to deflect it"},{id:"rt4",text:"Aim your deflection toward the ghast"},{id:"rt5",text:"Alternative: shoot the fireball mid-air with an arrow"}],tip:"Spam left-click rapidly — no precise timing needed. Pre-damage the ghast with arrows first so a deflected fireball can kill it."},
+  {id:"furious",name:"A Furious Cocktail",diff:"hard",desc:"Have all 13 potion effects active simultaneously.",reqs:[{id:"fu1",text:"Brewing stand + blaze powder"},{id:"fu2",text:"Fire Resistance — magma cream + awkward potion"},{id:"fu3",text:"Night Vision — golden carrot + awkward potion"},{id:"fu4",text:"Invisibility — fermented spider eye + night vision potion"},{id:"fu5",text:"Jump Boost — rabbit's foot + awkward potion"},{id:"fu6",text:"Poison — spider eye + awkward potion"},{id:"fu7",text:"Regeneration — ghast tear + awkward potion"},{id:"fu8",text:"Slow Falling — phantom membrane + awkward potion"},{id:"fu9",text:"Speed — sugar + awkward potion"},{id:"fu10",text:"Strength — blaze powder + awkward potion"},{id:"fu11",text:"Water Breathing — puffer fish + awkward potion"},{id:"fu12",text:"Weakness — fermented spider eye + water bottle"},{id:"fu13",text:"Slowness — fermented spider eye + Speed potion"},{id:"fu14",text:"Resistance — Turtle Master potion (turtle shell + awkward potion)"},{id:"fu15",text:"Extend all with redstone dust for 8-minute duration"},{id:"fu16",text:"Drink them all back-to-back as fast as possible"}],tip:"Brew extended (8-min) versions with redstone. Lay them all out and drink in rapid succession — plenty of time with extended potions."},
+  {id:"howdid",name:"How Did We Get Here?",diff:"hard",desc:"Have EVERY status effect active simultaneously. Includes all from Furious Cocktail plus Absorption, Bad Omen, Blindness, Conduit Power, Darkness, Dolphin's Grace, Glowing, Haste, Hero of the Village, Hunger, Levitation, Mining Fatigue, Nausea, and Wither.",reqs:[{id:"hw1",text:"All 13 Furious Cocktail potions (extended versions)"},{id:"hw2",text:"Absorption — eat a golden apple"},{id:"hw3",text:"Bad Omen — kill a raid captain (lasts 100 min)"},{id:"hw4",text:"Blindness — suspicious stew with azure bluet"},{id:"hw5",text:"Conduit Power — build conduit in water, must be submerged"},{id:"hw6",text:"Darkness — stand near a sculk shrieker in deep dark"},{id:"hw7",text:"Dolphin's Grace — swim near a dolphin"},{id:"hw8",text:"Glowing — get hit by a spectral arrow (rig a dispenser)"},{id:"hw9",text:"Haste — beacon with Haste active (tier 1 pyramid)"},{id:"hw10",text:"Hero of the Village — complete a raid first (lasts ~2 days)"},{id:"hw11",text:"Hunger — eat rotten flesh or raw chicken"},{id:"hw12",text:"Levitation — get hit by a shulker in End City"},{id:"hw13",text:"Mining Fatigue — be near an elder guardian in ocean monument"},{id:"hw14",text:"Nausea — suspicious stew with red mushroom, or pufferfish"},{id:"hw15",text:"Wither — step on a wither rose or get hit by wither skeleton"},{id:"hw16",text:"Setup area: near ocean monument, conduit in water, wither roses, shrieker, dolphins penned nearby"},{id:"hw17",text:"Complete a raid and kill a raid captain BEFORE the attempt"},{id:"hw18",text:"Trigger environmental effects first, drink potions last"},{id:"hw19",text:"Use extended potions so effects last while you gather the rest"}],tip:"This needs a dedicated setup area near an ocean monument (elder guardian + conduit water). Place wither roses, pen dolphins, set up a shrieker. Pre-do the raid and Bad Omen. Many players practice the sequence in Creative mode first."},
+  {id:"debris",name:"Cover Me in Debris",diff:"medium",desc:"Craft and wear a complete set of netherite armor.",reqs:[{id:"de1",text:"Full diamond armor set to upgrade"},{id:"de2",text:"Smithing table"},{id:"de3",text:"4× Netherite Upgrade smithing templates (bastion remnant chests)"},{id:"de4",text:"16 ancient debris total (Y=8–22 in Nether, best at Y=15)"},{id:"de5",text:"Diamond pickaxe to mine ancient debris"},{id:"de6",text:"Smelt debris → scraps (4 scraps + 4 gold ingots = 1 netherite ingot)"},{id:"de7",text:"4 netherite ingots total needed"},{id:"de8",text:"Apply ingot + template to each diamond armor piece at smithing table"}],tip:"Bed mining at Y=15 is fastest — beds explode in the Nether. Stand to the side, click the bed. Dangerous but efficient. Ancient debris never spawns exposed to air."},
+  {id:"greatview",name:"Great View From Up Here",diff:"medium",desc:"Rise 50 blocks while under Levitation (from a shulker hit) in an End City.",reqs:[{id:"gv1",text:"Reach an End City via end gateways"},{id:"gv2",text:"Enchanted armor — End Cities have shulkers everywhere"},{id:"gv3",text:"Slow Falling potion for the landing"},{id:"gv4",text:"Feather Falling IV on boots"},{id:"gv5",text:"Let shulkers hit you repeatedly to keep levitation going"},{id:"gv6",text:"Must rise 50 total blocks before effect wears off"}],tip:"Stand near a tall spire and let shulkers pepper you. Drink Slow Falling before the effect ends — the fall without it is lethal."},
+  {id:"balanced",name:"A Balanced Diet",diff:"hard",desc:"Eat every type of food in the game (39+ items).",reqs:[{id:"ba1",text:"Apple"},{id:"ba2",text:"Baked Potato"},{id:"ba3",text:"Beetroot + Beetroot Soup"},{id:"ba4",text:"Bread"},{id:"ba5",text:"Cake (place it, right-click to eat)"},{id:"ba6",text:"Carrot"},{id:"ba7",text:"Chorus Fruit (End Cities — teleports you)"},{id:"ba8",text:"Cookie"},{id:"ba9",text:"Dried Kelp"},{id:"ba10",text:"Enchanted Golden Apple (dungeon/bastion chest — very rare!)"},{id:"ba11",text:"Glow Berries (lush cave vines)"},{id:"ba12",text:"Golden Apple"},{id:"ba13",text:"Golden Carrot"},{id:"ba14",text:"Honey Bottle"},{id:"ba15",text:"Melon Slice"},{id:"ba16",text:"Mushroom Stew"},{id:"ba17",text:"Poisonous Potato (rare crop drop)"},{id:"ba18",text:"Pufferfish (gives poison)"},{id:"ba19",text:"Pumpkin Pie"},{id:"ba20",text:"Rabbit Stew"},{id:"ba21",text:"All raw meats: beef, chicken, cod, mutton, porkchop, rabbit, salmon"},{id:"ba22",text:"All cooked meats: steak, cooked chicken, cod, mutton, porkchop, rabbit, salmon"},{id:"ba23",text:"Rotten Flesh"},{id:"ba24",text:"Spider Eye"},{id:"ba25",text:"Suspicious Stew"},{id:"ba26",text:"Sweet Berries"},{id:"ba27",text:"Tropical Fish (warm ocean)"},{id:"ba28",text:"Potato"}],tip:"Hardest: Enchanted Golden Apple, Poisonous Potato, Chorus Fruit, Tropical Fish, Glow Berries. Start a dedicated food chest early and toss every food type in as you find it."},
+  {id:"twobytwo",name:"Two by Two",diff:"hard",desc:"Breed all 19+ breedable animal types.",reqs:[{id:"tt1",text:"Cows — wheat"},{id:"tt2",text:"Sheep — wheat"},{id:"tt3",text:"Pigs — carrot, potato, or beetroot"},{id:"tt4",text:"Chickens — any seeds"},{id:"tt5",text:"Rabbits — dandelion, golden carrot, or carrots"},{id:"tt6",text:"Wolves — any meat (tame first with bones)"},{id:"tt7",text:"Cats — raw cod or salmon (tame first)"},{id:"tt8",text:"Horses/Donkeys — golden apple or golden carrot (tame first)"},{id:"tt9",text:"Llamas — hay bale"},{id:"tt10",text:"Bees — any flower"},{id:"tt11",text:"Turtles — seagrass (must be on a beach)"},{id:"tt12",text:"Foxes — sweet berries or glow berries"},{id:"tt13",text:"Pandas — bamboo (8 bamboo blocks within 5 blocks!)"},{id:"tt14",text:"Axolotls — tropical fish bucket"},{id:"tt15",text:"Goats — wheat"},{id:"tt16",text:"Frogs — slimeball"},{id:"tt17",text:"Striders — warped fungus"},{id:"tt18",text:"Hoglins — crimson fungus"},{id:"tt19",text:"Sniffers — torchflower seeds"},{id:"tt20",text:"Camels — cactus"}],tip:"Hardest: Axolotls (need tropical fish bucket), Pandas (need 8 bamboo nearby, rare spawn), Sniffers (ancient seeds from ocean monuments), Frogs (need slimeballs). Do this progressively."},
+  {id:"monsters",name:"Monsters Hunted",diff:"hard",desc:"Kill at least one of every hostile mob.",reqs:[{id:"mo1",text:"Zombie, Skeleton, Creeper, Spider — night surface"},{id:"mo2",text:"Enderman — night or The End"},{id:"mo3",text:"Witch — swamp huts or from lightning-struck villager"},{id:"mo4",text:"Slime — swamp at night or underground slime chunks"},{id:"mo5",text:"Cave Spider — abandoned mineshafts"},{id:"mo6",text:"Silverfish — stronghold infested stone"},{id:"mo7",text:"Zombie Villager, Husk, Stray, Drowned — variants in specific biomes"},{id:"mo8",text:"Phantom — don't sleep 3+ nights"},{id:"mo9",text:"Pillager, Vindicator, Evoker, Ravager, Vex — raids & outposts"},{id:"mo10",text:"Guardian, Elder Guardian — ocean monument"},{id:"mo11",text:"Blaze, Wither Skeleton, Ghast, Zombie Piglin — Nether fortress/Nether"},{id:"mo12",text:"Piglin Brute — bastion remnants"},{id:"mo13",text:"Hoglin — crimson forest"},{id:"mo14",text:"Zoglin — bring hoglin to Overworld (it transforms)"},{id:"mo15",text:"Magma Cube — basalt deltas or Nether fortress"},{id:"mo16",text:"Shulker — End City"},{id:"mo17",text:"Endermite — rarely spawns when ender pearl lands"},{id:"mo18",text:"Warden — trigger shriekers 3 times in deep dark"},{id:"mo19",text:"Breeze, Bogged — trial chambers"},{id:"mo20",text:"Creaking — pale garden biome at night (destroy heart block)"}],tip:"Hardest: Endermite (spam ender pearls), Zoglin (drag hoglin through portal), Warden (wear best armor, have escape plan), Creaking (find pale garden). Keep a list and cross off as you go."},
+  {id:"twobirds",name:"Two Birds, One Arrow",diff:"medium",desc:"Kill 2 phantoms with a single piercing crossbow bolt.",reqs:[{id:"tb1",text:"Crossbow with Piercing enchantment (level 1 enough)"},{id:"tb2",text:"Don't sleep 3+ nights so phantoms spawn"},{id:"tb3",text:"Wait for 2 phantoms to line up or fly close"},{id:"tb4",text:"Optionally: pre-damage both so one bolt finishes them"}],tip:"Phantoms swoop in formation. Pre-damage both with a sword, then line up a piercing shot when they're both in front of you. Don't sleep between attempts."},
+  {id:"arb",name:"Arbalistic",diff:"hard",desc:"Kill 5 different mob types with a single piercing crossbow shot.",reqs:[{id:"ar1",text:"Crossbow with Piercing IV (max level)"},{id:"ar2",text:"5 different mob types lined up"},{id:"ar3",text:"Suggested: zombie, skeleton, spider, creeper, zombie villager"},{id:"ar4",text:"Build a 1-block-wide corridor ~10 blocks long"},{id:"ar5",text:"Use leads or boats to hold mobs in position"},{id:"ar6",text:"Damage all 5 to near-1 health before firing"},{id:"ar7",text:"Fire bolt straight down the corridor"}],tip:"Build a narrow pen, trap each mob type, whittle them to near-death with a sword or splash potions, then fire one bolt. Do this in a covered area to prevent mobs burning in sunlight."},
+  {id:"smithstyle",name:"Smithing with Style",diff:"hard",desc:"Apply all 8 rare armor trim templates at least once.",reqs:[{id:"ss1",text:"Spire Trim — End City chests"},{id:"ss2",text:"Snout Trim — Bastion Remnant chests"},{id:"ss3",text:"Rib Trim — Nether Fortress chests"},{id:"ss4",text:"Ward Trim — Ancient City chests (deep dark)"},{id:"ss5",text:"Silence Trim — Ancient City chests (very rare!)"},{id:"ss6",text:"Vex Trim — Woodland Mansion chests"},{id:"ss7",text:"Tide Trim — Ocean Monument rooms"},{id:"ss8",text:"Wayfinder Trim — brushing suspicious gravel in trail ruins"},{id:"ss9",text:"Smithing table + any armor piece + any metal ingot for color"},{id:"ss10",text:"Apply each template at least once (doesn't have to be same piece)"}],tip:"Silence trim is rarest — sneak into ancient cities, grab loot fast, don't trigger Warden. Ward is also there. Save every trim template you find throughout your run."},
+  {id:"serious",name:"Serious Dedication",diff:"easy",desc:"Completely wear out a diamond hoe (1,562 uses).",reqs:[{id:"se1",text:"Craft diamond hoe — 2 diamonds + 2 sticks"},{id:"se2",text:"Do NOT enchant with Unbreaking or Mending"},{id:"se3",text:"Hold right-click on a large dirt/grass field until it breaks"}],tip:"Takes a few minutes. Hold right-click on dirt while watching something. You'll get the advancement the moment it breaks."},
+];
+
+/* ══════════════════════════════════════════
+   CRAFTING DATA
+   Format: {cat, name, emoji, station, yields, grid (9 cells, '' = empty), ingredients (text), note?}
+   station: 'crafting' | 'table' | 'furnace' | 'smoker' | 'blast' | 'smithing' | 'stonecutter' | 'brewing'
+══════════════════════════════════════════ */
+const craftCats={
+  tools:"Tools",weapons:"Weapons",armor:"Armor",
+  blocks:"Blocks",food:"Food",redstone:"Redstone",
+  utility:"Utility",decorative:"Decorative",misc:"Misc"
+};
+
+/* grid: array of 9 strings (top-left to bottom-right), empty string = empty cell */
+const recipes=[
+  /* ── TOOLS ── */
+  {cat:"tools",name:"Wooden Pickaxe",emoji:"⛏️",station:"table",yields:"1",grid:["🪵","🪵","🪵","","🪹","","","🪹",""],ingredients:"3 Wood Planks (any) + 2 Sticks"},
+  {cat:"tools",name:"Stone Pickaxe",emoji:"⛏️",station:"table",yields:"1",grid:["🪨","🪨","🪨","","🪹","","","🪹",""],ingredients:"3 Cobblestone + 2 Sticks"},
+  {cat:"tools",name:"Iron Pickaxe",emoji:"⛏️",station:"table",yields:"1",grid:["🔩","🔩","🔩","","🪹","","","🪹",""],ingredients:"3 Iron Ingots + 2 Sticks"},
+  {cat:"tools",name:"Gold Pickaxe",emoji:"⛏️",station:"table",yields:"1",grid:["🥇","🥇","🥇","","🪹","","","🪹",""],ingredients:"3 Gold Ingots + 2 Sticks"},
+  {cat:"tools",name:"Diamond Pickaxe",emoji:"⛏️",station:"table",yields:"1",grid:["💎","💎","💎","","🪹","","","🪹",""],ingredients:"3 Diamonds + 2 Sticks"},
+  {cat:"tools",name:"Netherite Pickaxe",emoji:"⛏️",station:"smithing",yields:"1",grid:["","","","","","","","",""],ingredients:"Diamond Pickaxe + Netherite Ingot + Netherite Upgrade Template",note:"Upgrade at a Smithing Table"},
+  {cat:"tools",name:"Wooden Shovel",emoji:"🪣",station:"table",yields:"1",grid:["","🪵","","","🪹","","","🪹",""],ingredients:"1 Wood Plank + 2 Sticks"},
+  {cat:"tools",name:"Stone Shovel",emoji:"🪣",station:"table",yields:"1",grid:["","🪨","","","🪹","","","🪹",""],ingredients:"1 Cobblestone + 2 Sticks"},
+  {cat:"tools",name:"Iron Shovel",emoji:"🪣",station:"table",yields:"1",grid:["","🔩","","","🪹","","","🪹",""],ingredients:"1 Iron Ingot + 2 Sticks"},
+  {cat:"tools",name:"Diamond Shovel",emoji:"🪣",station:"table",yields:"1",grid:["","💎","","","🪹","","","🪹",""],ingredients:"1 Diamond + 2 Sticks"},
+  {cat:"tools",name:"Wooden Axe",emoji:"🪓",station:"table",yields:"1",grid:["🪵","🪵","","🪵","🪹","","","🪹",""],ingredients:"3 Wood Planks + 2 Sticks"},
+  {cat:"tools",name:"Stone Axe",emoji:"🪓",station:"table",yields:"1",grid:["🪨","🪨","","🪨","🪹","","","🪹",""],ingredients:"3 Cobblestone + 2 Sticks"},
+  {cat:"tools",name:"Iron Axe",emoji:"🪓",station:"table",yields:"1",grid:["🔩","🔩","","🔩","🪹","","","🪹",""],ingredients:"3 Iron Ingots + 2 Sticks"},
+  {cat:"tools",name:"Diamond Axe",emoji:"🪓",station:"table",yields:"1",grid:["💎","💎","","💎","🪹","","","🪹",""],ingredients:"3 Diamonds + 2 Sticks"},
+  {cat:"tools",name:"Wooden Hoe",emoji:"🌾",station:"table",yields:"1",grid:["🪵","🪵","","","🪹","","","🪹",""],ingredients:"2 Wood Planks + 2 Sticks"},
+  {cat:"tools",name:"Iron Hoe",emoji:"🌾",station:"table",yields:"1",grid:["🔩","🔩","","","🪹","","","🪹",""],ingredients:"2 Iron Ingots + 2 Sticks"},
+  {cat:"tools",name:"Diamond Hoe",emoji:"🌾",station:"table",yields:"1",grid:["💎","💎","","","🪹","","","🪹",""],ingredients:"2 Diamonds + 2 Sticks"},
+  {cat:"tools",name:"Fishing Rod",emoji:"🎣",station:"table",yields:"1",grid:["","","🪹","","🪹","🪢","🪹","","🪢"],ingredients:"3 Sticks + 2 String"},
+  {cat:"tools",name:"Flint & Steel",emoji:"🔥",station:"table",yields:"1",grid:["🔩","","","","🪨","","","",""],ingredients:"1 Iron Ingot + 1 Flint",note:"Shapeless recipe"},
+  {cat:"tools",name:"Shears",emoji:"✂️",station:"table",yields:"1",grid:["","🔩","","🔩","","","","",""],ingredients:"2 Iron Ingots"},
+  {cat:"tools",name:"Compass",emoji:"🧭",station:"table",yields:"1",grid:["","🔩","","🔩","🔴","🔩","","🔩",""],ingredients:"4 Iron Ingots + 1 Redstone Dust (center)"},
+  {cat:"tools",name:"Clock",emoji:"⏱️",station:"table",yields:"1",grid:["","🥇","","🥇","🔴","🥇","","🥇",""],ingredients:"4 Gold Ingots + 1 Redstone Dust (center)"},
+  {cat:"tools",name:"Spyglass",emoji:"🔭",station:"table",yields:"1",grid:["","💜","","🔩","","","🔩","",""],ingredients:"1 Amethyst Shard + 2 Copper Ingots"},
+  {cat:"tools",name:"Brush",emoji:"🖌️",station:"table",yields:"1",grid:["","🪢","","","🪹","","","🍄",""],ingredients:"1 String + 1 Stick + 1 Copper Ingot"},
+  {cat:"tools",name:"Carrot on a Stick",emoji:"🥕",station:"table",yields:"1",grid:["🎣","","","","🥕","","","",""],ingredients:"1 Fishing Rod + 1 Carrot",note:"Shapeless"},
+  {cat:"tools",name:"Warped Fungus on a Stick",emoji:"🍄",station:"table",yields:"1",grid:["🎣","","","","🍄","","","",""],ingredients:"1 Fishing Rod + 1 Warped Fungus",note:"Shapeless"},
+
+  /* ── WEAPONS ── */
+  {cat:"weapons",name:"Wooden Sword",emoji:"⚔️",station:"table",yields:"1",grid:["","🪵","","","🪵","","","🪹",""],ingredients:"2 Wood Planks + 1 Stick"},
+  {cat:"weapons",name:"Stone Sword",emoji:"⚔️",station:"table",yields:"1",grid:["","🪨","","","🪨","","","🪹",""],ingredients:"2 Cobblestone + 1 Stick"},
+  {cat:"weapons",name:"Iron Sword",emoji:"⚔️",station:"table",yields:"1",grid:["","🔩","","","🔩","","","🪹",""],ingredients:"2 Iron Ingots + 1 Stick"},
+  {cat:"weapons",name:"Gold Sword",emoji:"⚔️",station:"table",yields:"1",grid:["","🥇","","","🥇","","","🪹",""],ingredients:"2 Gold Ingots + 1 Stick"},
+  {cat:"weapons",name:"Diamond Sword",emoji:"⚔️",station:"table",yields:"1",grid:["","💎","","","💎","","","🪹",""],ingredients:"2 Diamonds + 1 Stick"},
+  {cat:"weapons",name:"Netherite Sword",emoji:"⚔️",station:"smithing",yields:"1",grid:["","","","","","","","",""],ingredients:"Diamond Sword + Netherite Ingot + Netherite Upgrade Template",note:"Upgrade at Smithing Table"},
+  {cat:"weapons",name:"Bow",emoji:"🏹",station:"table",yields:"1",grid:["","🪹","🪢","🪹","","🪢","","🪹","🪢"],ingredients:"3 Sticks + 3 String"},
+  {cat:"weapons",name:"Crossbow",emoji:"🏹",station:"table",yields:"1",grid:["🪹","🪢","🪹","🔩","","🔩","","🪹",""],ingredients:"3 Sticks + 2 Iron Ingots + 1 String + 1 Tripwire Hook"},
+  {cat:"weapons",name:"Arrow",emoji:"🏹",station:"table",yields:"4",grid:["","🗿","","","🪹","","","🪶",""],ingredients:"1 Flint + 1 Stick + 1 Feather"},
+  {cat:"weapons",name:"Spectral Arrow",emoji:"✨",station:"table",yields:"2",grid:["","✨","","✨","🏹","✨","","✨",""],ingredients:"4 Glowstone Dust + 1 Arrow",note:"Causes Glowing effect"},
+  {cat:"weapons",name:"Trident",emoji:"🔱",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found from drowned mobs only",note:"Drop from Drowned holding a trident"},
+  {cat:"weapons",name:"Shield",emoji:"🛡️",station:"table",yields:"1",grid:["🪵","🔩","🪵","🪵","🪵","🪵","","🪵",""],ingredients:"6 Wood Planks (any) + 1 Iron Ingot"},
+
+  /* ── ARMOR ── */
+  {cat:"armor",name:"Leather Helmet",emoji:"🪖",station:"table",yields:"1",grid:["🦌","🦌","🦌","🦌","","🦌","","",""],ingredients:"5 Leather"},
+  {cat:"armor",name:"Leather Chestplate",emoji:"👕",station:"table",yields:"1",grid:["🦌","","🦌","🦌","🦌","🦌","🦌","🦌","🦌"],ingredients:"8 Leather"},
+  {cat:"armor",name:"Leather Leggings",emoji:"👖",station:"table",yields:"1",grid:["🦌","🦌","🦌","🦌","","🦌","🦌","","🦌"],ingredients:"7 Leather"},
+  {cat:"armor",name:"Leather Boots",emoji:"👟",station:"table",yields:"1",grid:["","","","🦌","","🦌","🦌","","🦌"],ingredients:"4 Leather"},
+  {cat:"armor",name:"Iron Helmet",emoji:"🪖",station:"table",yields:"1",grid:["🔩","🔩","🔩","🔩","","🔩","","",""],ingredients:"5 Iron Ingots"},
+  {cat:"armor",name:"Iron Chestplate",emoji:"👕",station:"table",yields:"1",grid:["🔩","","🔩","🔩","🔩","🔩","🔩","🔩","🔩"],ingredients:"8 Iron Ingots"},
+  {cat:"armor",name:"Iron Leggings",emoji:"👖",station:"table",yields:"1",grid:["🔩","🔩","🔩","🔩","","🔩","🔩","","🔩"],ingredients:"7 Iron Ingots"},
+  {cat:"armor",name:"Iron Boots",emoji:"👟",station:"table",yields:"1",grid:["","","","🔩","","🔩","🔩","","🔩"],ingredients:"4 Iron Ingots"},
+  {cat:"armor",name:"Gold Helmet",emoji:"🪖",station:"table",yields:"1",grid:["🥇","🥇","🥇","🥇","","🥇","","",""],ingredients:"5 Gold Ingots"},
+  {cat:"armor",name:"Gold Chestplate",emoji:"👕",station:"table",yields:"1",grid:["🥇","","🥇","🥇","🥇","🥇","🥇","🥇","🥇"],ingredients:"8 Gold Ingots"},
+  {cat:"armor",name:"Gold Leggings",emoji:"👖",station:"table",yields:"1",grid:["🥇","🥇","🥇","🥇","","🥇","🥇","","🥇"],ingredients:"7 Gold Ingots"},
+  {cat:"armor",name:"Gold Boots",emoji:"👟",station:"table",yields:"1",grid:["","","","🥇","","🥇","🥇","","🥇"],ingredients:"4 Gold Ingots"},
+  {cat:"armor",name:"Diamond Helmet",emoji:"🪖",station:"table",yields:"1",grid:["💎","💎","💎","💎","","💎","","",""],ingredients:"5 Diamonds"},
+  {cat:"armor",name:"Diamond Chestplate",emoji:"👕",station:"table",yields:"1",grid:["💎","","💎","💎","💎","💎","💎","💎","💎"],ingredients:"8 Diamonds"},
+  {cat:"armor",name:"Diamond Leggings",emoji:"👖",station:"table",yields:"1",grid:["💎","💎","💎","💎","","💎","💎","","💎"],ingredients:"7 Diamonds"},
+  {cat:"armor",name:"Diamond Boots",emoji:"👟",station:"table",yields:"1",grid:["","","","💎","","💎","💎","","💎"],ingredients:"4 Diamonds"},
+  {cat:"armor",name:"Netherite Armor (any piece)",emoji:"🛡️",station:"smithing",yields:"1",grid:["","","","","","","","",""],ingredients:"Diamond Armor Piece + Netherite Ingot + Netherite Upgrade Template",note:"One template per piece. Templates found in bastion remnant chests."},
+  {cat:"armor",name:"Turtle Shell",emoji:"🐢",station:"table",yields:"1",grid:["🐢","🐢","🐢","🐢","","🐢","","",""],ingredients:"5 Turtle Scutes",note:"Scutes drop when baby turtle grows up"},
+  {cat:"armor",name:"Elytra",emoji:"🦋",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in End City ship item frames only"},
+
+  /* ── BLOCKS ── */
+  {cat:"blocks",name:"Wood Planks",emoji:"🪵",station:"crafting",yields:"4",grid:["","","","","🌲","","","",""],ingredients:"1 Log (any wood type) → 4 planks",note:"Any log works in inventory 2×2"},
+  {cat:"blocks",name:"Sticks",emoji:"🪹",station:"crafting",yields:"4",grid:["","🪵","","","🪵","","","",""],ingredients:"2 Wood Planks (vertically stacked)"},
+  {cat:"blocks",name:"Crafting Table",emoji:"🪵",station:"crafting",yields:"1",grid:["","","","🪵","🪵","","🪵","🪵",""],ingredients:"4 Wood Planks (2×2 square)"},
+  {cat:"blocks",name:"Furnace",emoji:"🔥",station:"table",yields:"1",grid:["🪨","🪨","🪨","🪨","","🪨","🪨","🪨","🪨"],ingredients:"8 Cobblestone (hollow square)"},
+  {cat:"blocks",name:"Blast Furnace",emoji:"🔥",station:"table",yields:"1",grid:["🔩","🔩","🔩","🔩","🔥","🔩","🪨","🪨","🪨"],ingredients:"3 Iron Ingots + 1 Furnace + 5 Smooth Stone"},
+  {cat:"blocks",name:"Smoker",emoji:"💨",station:"table",yields:"1",grid:["","🌲","","🌲","🔥","🌲","","🌲",""],ingredients:"4 Logs (any) + 1 Furnace"},
+  {cat:"blocks",name:"Chest",emoji:"📦",station:"table",yields:"1",grid:["🪵","🪵","🪵","🪵","","🪵","🪵","🪵","🪵"],ingredients:"8 Wood Planks (hollow square)"},
+  {cat:"blocks",name:"Trapped Chest",emoji:"📦",station:"table",yields:"1",grid:["","","","📦","🪤","","","",""],ingredients:"1 Chest + 1 Tripwire Hook",note:"Shapeless"},
+  {cat:"blocks",name:"Ender Chest",emoji:"📦",station:"table",yields:"1",grid:["🪨","🪨","🪨","🪨","👁️","🪨","🪨","🪨","🪨"],ingredients:"8 Obsidian + 1 Eye of Ender"},
+  {cat:"blocks",name:"Barrel",emoji:"🛢️",station:"table",yields:"1",grid:["🪵","🪵","🪵","🪵","📋","🪵","🪵","🪵","🪵"],ingredients:"6 Wood Planks + 2 Wood Slabs"},
+  {cat:"blocks",name:"Bookshelf",emoji:"📚",station:"table",yields:"1",grid:["🪵","🪵","🪵","📚","📚","📚","🪵","🪵","🪵"],ingredients:"6 Wood Planks + 3 Books"},
+  {cat:"blocks",name:"Enchanting Table",emoji:"✨",station:"table",yields:"1",grid:["","📚","","💎","🪹","💎","🪹","🪹","🪹"],ingredients:"1 Book + 2 Diamonds + 4 Obsidian"},
+  {cat:"blocks",name:"Anvil",emoji:"⚒️",station:"table",yields:"1",grid:["🔳","🔳","🔳","","🔩","","🔳","🔳","🔳"],ingredients:"3 Blocks of Iron + 4 Iron Ingots (center + bottom row)"},
+  {cat:"blocks",name:"Smithing Table",emoji:"🔨",station:"table",yields:"1",grid:["🔩","🔩","","🪵","🪵","","🪵","🪵",""],ingredients:"2 Iron Ingots + 4 Wood Planks"},
+  {cat:"blocks",name:"Stonecutter",emoji:"🪨",station:"table",yields:"1",grid:["","🔩","","🪨","🪨","🪨","","",""],ingredients:"1 Iron Ingot + 3 Stone"},
+  {cat:"blocks",name:"Grindstone",emoji:"⚙️",station:"table",yields:"1",grid:["🪹","🪨","🪹","","🪵","","","🪨",""],ingredients:"2 Sticks + 1 Stone Slab + 2 Stone"},
+  {cat:"blocks",name:"Loom",emoji:"🧵",station:"table",yields:"1",grid:["","","","🪢","🪢","","🪵","🪵",""],ingredients:"2 String + 2 Wood Planks"},
+  {cat:"blocks",name:"Cartography Table",emoji:"🗺️",station:"table",yields:"1",grid:["📜","📜","","🪵","🪵","","🪵","🪵",""],ingredients:"2 Paper + 4 Wood Planks"},
+  {cat:"blocks",name:"Fletching Table",emoji:"🪃",station:"table",yields:"1",grid:["🗿","🗿","","🪵","🪵","","🪵","🪵",""],ingredients:"2 Flint + 4 Wood Planks"},
+  {cat:"blocks",name:"Brewing Stand",emoji:"⚗️",station:"table",yields:"1",grid:["","🔥","","🪨","🔥","🪨","🪨","",""],ingredients:"1 Blaze Rod + 3 Cobblestone"},
+  {cat:"blocks",name:"Cauldron",emoji:"🫕",station:"table",yields:"1",grid:["🔩","","🔩","🔩","","🔩","🔩","🔩","🔩"],ingredients:"7 Iron Ingots (U-shape)"},
+  {cat:"blocks",name:"Hopper",emoji:"🔽",station:"table",yields:"1",grid:["🔩","","🔩","🔩","📦","🔩","","🔩",""],ingredients:"5 Iron Ingots + 1 Chest"},
+  {cat:"blocks",name:"Dispenser",emoji:"📤",station:"table",yields:"1",grid:["🪨","🪨","🪨","🪨","🏹","🪨","🪨","🔴","🪨"],ingredients:"7 Cobblestone + 1 Bow + 1 Redstone Dust"},
+  {cat:"blocks",name:"Dropper",emoji:"📤",station:"table",yields:"1",grid:["🪨","🪨","🪨","🪨","","🪨","🪨","🔴","🪨"],ingredients:"7 Cobblestone + 1 Redstone Dust"},
+  {cat:"blocks",name:"Piston",emoji:"📦",station:"table",yields:"1",grid:["🪵","🪵","🪵","🪨","🔩","🪨","🪨","🔴","🪨"],ingredients:"3 Wood Planks + 4 Cobblestone + 1 Iron Ingot + 1 Redstone"},
+  {cat:"blocks",name:"Sticky Piston",emoji:"📦",station:"table",yields:"1",grid:["","🟢","","","📦","","","",""],ingredients:"1 Slimeball + 1 Piston (shapeless)"},
+  {cat:"blocks",name:"TNT",emoji:"💥",station:"table",yields:"1",grid:["🔫","🟫","🔫","🟫","🔫","🟫","🔫","🟫","🔫"],ingredients:"5 Gunpowder + 4 Sand (alternating)"},
+  {cat:"blocks",name:"Torch",emoji:"🕯️",station:"crafting",yields:"4",grid:["","🪨","","","🪹","","","",""],ingredients:"1 Coal or Charcoal + 1 Stick"},
+  {cat:"blocks",name:"Soul Torch",emoji:"🔵",station:"crafting",yields:"4",grid:["","🟤","","","🪹","","","🌊",""],ingredients:"1 Coal/Charcoal + 1 Stick + 1 Soul Sand/Soil (bottom)",note:"Soul sand or soil below the stick"},
+  {cat:"blocks",name:"Lantern",emoji:"🏮",station:"table",yields:"1",grid:["🔗","🔗","🔗","🔗","🕯️","🔗","🔗","🔗","🔗"],ingredients:"8 Iron Nuggets + 1 Torch"},
+  {cat:"blocks",name:"Soul Lantern",emoji:"🔵",station:"table",yields:"1",grid:["🔗","🔗","🔗","🔗","🔵","🔗","🔗","🔗","🔗"],ingredients:"8 Iron Nuggets + 1 Soul Torch"},
+  {cat:"blocks",name:"Sea Lantern",emoji:"💙",station:"table",yields:"1",grid:["💧","💙","💧","💙","💙","💙","💧","💙","💧"],ingredients:"4 Prismarine Crystals + 5 Prismarine Shards"},
+  {cat:"blocks",name:"Glowstone",emoji:"🌟",station:"crafting",yields:"1",grid:["","","","🌟","🌟","","🌟","🌟",""],ingredients:"4 Glowstone Dust (2×2)"},
+  {cat:"blocks",name:"Stone Bricks",emoji:"🪨",station:"table",yields:"4",grid:["","","","🪨","🪨","","🪨","🪨",""],ingredients:"4 Stone (2×2)"},
+  {cat:"blocks",name:"Obsidian Block",emoji:"⬛",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Place water on lava source — cannot be crafted"},
+  {cat:"blocks",name:"End Stone Bricks",emoji:"🟡",station:"table",yields:"4",grid:["","","","🟡","🟡","","🟡","🟡",""],ingredients:"4 End Stone (2×2)"},
+  {cat:"blocks",name:"Purpur Block",emoji:"🟣",station:"table",yields:"4",grid:["","","","🍇","🍇","","🍇","🍇",""],ingredients:"4 Popped Chorus Fruit (2×2)"},
+  {cat:"blocks",name:"Nether Brick",emoji:"🔴",station:"table",yields:"1",grid:["","","","🔴","🔴","","🔴","🔴",""],ingredients:"4 Nether Brick items (2×2)"},
+  {cat:"blocks",name:"Quartz Block",emoji:"⬜",station:"crafting",yields:"1",grid:["","","","⬜","⬜","","⬜","⬜",""],ingredients:"4 Nether Quartz (2×2)"},
+  {cat:"blocks",name:"Sandstone",emoji:"🏜️",station:"crafting",yields:"1",grid:["","","","🏖️","🏖️","","🏖️","🏖️",""],ingredients:"4 Sand (2×2)"},
+  {cat:"blocks",name:"Glass",emoji:"🔷",station:"furnace",yields:"1",grid:["","","","","","","","",""],ingredients:"Smelt 1 Sand or Red Sand"},
+  {cat:"blocks",name:"Glass Pane",emoji:"🔷",station:"table",yields:"16",grid:["🔷","🔷","🔷","🔷","🔷","🔷","","",""],ingredients:"6 Glass (2 rows of 3)"},
+  {cat:"blocks",name:"Iron Bars",emoji:"🔗",station:"table",yields:"16",grid:["🔩","🔩","🔩","🔩","🔩","🔩","","",""],ingredients:"6 Iron Ingots (2 rows of 3)"},
+  {cat:"blocks",name:"Copper Block",emoji:"🟠",station:"crafting",yields:"1",grid:["","","","🟠","🟠","","🟠","🟠",""],ingredients:"4 Copper Ingots (2×2, makes 1) — or 9 for full block"},
+  {cat:"blocks",name:"Lodestone",emoji:"🧲",station:"table",yields:"1",grid:["🪨","🪨","🪨","🪨","⚫","🪨","🪨","🪨","🪨"],ingredients:"8 Chiseled Stone Bricks + 1 Netherite Ingot"},
+  {cat:"blocks",name:"Respawn Anchor",emoji:"⚓",station:"table",yields:"1",grid:["🟩","🟩","🟩","🪹","🪹","🪹","🟩","🟩","🟩"],ingredients:"6 Crying Obsidian + 3 Glowstone"},
+  {cat:"blocks",name:"Target Block",emoji:"🎯",station:"table",yields:"1",grid:["","🌾","","🌾","🔴","🌾","","🌾",""],ingredients:"4 Redstone Dust + 1 Hay Bale"},
+  {cat:"blocks",name:"Hay Bale",emoji:"🌾",station:"crafting",yields:"1",grid:["","","","🌾","🌾","🌾","","",""],ingredients:"9 Wheat (3×3)"},
+  {cat:"blocks",name:"Sponge",emoji:"🟡",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in ocean monuments"},
+  {cat:"blocks",name:"Beacon",emoji:"✨",station:"table",yields:"1",grid:["🔷","🔷","🔷","🔷","⭐","🔷","🪹","🪹","🪹"],ingredients:"5 Glass + 1 Nether Star + 3 Obsidian"},
+  {cat:"blocks",name:"Conduit",emoji:"💧",station:"table",yields:"1",grid:["🐚","🐚","🐚","🐚","💎","🐚","🐚","🐚","🐚"],ingredients:"8 Nautilus Shells + 1 Heart of the Sea",note:"Heart of the Sea found in buried treasure"},
+  {cat:"blocks",name:"Crafter",emoji:"⚙️",station:"table",yields:"1",grid:["🔩","🪤","🔩","🪵","🪹","🪵","🔴","🪵","🔴"],ingredients:"3 Iron Ingots + 3 Wood Planks + 2 Redstone Dust + 1 Dropper"},
+
+  /* ── FOOD ── */
+  {cat:"food",name:"Bread",emoji:"🍞",station:"table",yields:"1",grid:["","","","🌾","🌾","🌾","","",""],ingredients:"3 Wheat (in a row)"},
+  {cat:"food",name:"Cookie",emoji:"🍪",station:"table",yields:"8",grid:["","","","🌾","🍫","🌾","","",""],ingredients:"2 Wheat + 1 Cocoa Beans"},
+  {cat:"food",name:"Cake",emoji:"🎂",station:"table",yields:"1",grid:["🥛","🥛","🥛","🍯","🥚","🍯","🌾","🌾","🌾"],ingredients:"3 Milk Buckets + 2 Sugar + 1 Egg + 3 Wheat"},
+  {cat:"food",name:"Pumpkin Pie",emoji:"🥧",station:"table",yields:"1",grid:["","","","🎃","🍯","🥚","","",""],ingredients:"1 Pumpkin + 1 Sugar + 1 Egg",note:"Shapeless"},
+  {cat:"food",name:"Golden Apple",emoji:"🍎",station:"crafting",yields:"1",grid:["🥇","🥇","🥇","🥇","🍎","🥇","🥇","🥇","🥇"],ingredients:"8 Gold Ingots + 1 Apple"},
+  {cat:"food",name:"Golden Carrot",emoji:"🥕",station:"table",yields:"1",grid:["🟡","🟡","🟡","🟡","🥕","🟡","🟡","🟡","🟡"],ingredients:"8 Gold Nuggets + 1 Carrot"},
+  {cat:"food",name:"Mushroom Stew",emoji:"🍲",station:"crafting",yields:"1",grid:["","🍄","","","🍄","","","🥣",""],ingredients:"1 Red Mushroom + 1 Brown Mushroom + 1 Bowl",note:"Shapeless"},
+  {cat:"food",name:"Rabbit Stew",emoji:"🍲",station:"table",yields:"1",grid:["","🥕","","🍗","🥔","🍄","","🥣",""],ingredients:"1 Cooked Rabbit + 1 Carrot + 1 Baked Potato + 1 Mushroom + 1 Bowl",note:"Shapeless"},
+  {cat:"food",name:"Beetroot Soup",emoji:"🍲",station:"table",yields:"1",grid:["🟣","🟣","🟣","🟣","🟣","🟣","","🥣",""],ingredients:"6 Beetroot + 1 Bowl",note:"Shapeless"},
+  {cat:"food",name:"Dried Kelp",emoji:"🌿",station:"furnace",yields:"1",grid:["","","","","","","","",""],ingredients:"Smelt 1 Kelp"},
+  {cat:"food",name:"Baked Potato",emoji:"🥔",station:"furnace",yields:"1",grid:["","","","","","","","",""],ingredients:"Smelt 1 Potato"},
+  {cat:"food",name:"Sugar",emoji:"🍬",station:"crafting",yields:"1",grid:["","","","","🎋","","","",""],ingredients:"1 Sugar Cane (shapeless) OR 1 Honey Bottle → 3 Sugar"},
+  {cat:"food",name:"Bowl",emoji:"🥣",station:"crafting",yields:"4",grid:["","","","🪵","","🪵","","🪵",""],ingredients:"3 Wood Planks (V-shape)"},
+  {cat:"food",name:"Honey Bottle",emoji:"🍯",station:"none",yields:"1",grid:["","","","","","","","",""],ingredients:"Right-click a full beehive or bee nest with an empty bottle"},
+  {cat:"food",name:"Suspicious Stew",emoji:"🍲",station:"table",yields:"1",grid:["","🌻","","🍄","🍄","","","🥣",""],ingredients:"1 Flower (determines effect) + 1 Red Mushroom + 1 Brown Mushroom + 1 Bowl",note:"Shapeless. Azure bluet = Blindness. Red tulip = Weakness. etc."},
+
+  /* ── REDSTONE ── */
+  {cat:"redstone",name:"Redstone Torch",emoji:"🔴",station:"crafting",yields:"1",grid:["","🔴","","","🪹","","","",""],ingredients:"1 Redstone Dust + 1 Stick"},
+  {cat:"redstone",name:"Lever",emoji:"🕹️",station:"crafting",yields:"1",grid:["","🪹","","","🪨","","","",""],ingredients:"1 Stick + 1 Cobblestone",note:"Shapeless"},
+  {cat:"redstone",name:"Button (Stone)",emoji:"🔘",station:"crafting",yields:"1",grid:["","","","","🪨","","","",""],ingredients:"1 Stone"},
+  {cat:"redstone",name:"Button (Wood)",emoji:"🔘",station:"crafting",yields:"1",grid:["","","","","🪵","","","",""],ingredients:"1 Wood Plank (any)"},
+  {cat:"redstone",name:"Pressure Plate (Stone)",emoji:"⬛",station:"table",yields:"1",grid:["","","","🪨","🪨","","","",""],ingredients:"2 Stone (side by side)"},
+  {cat:"redstone",name:"Pressure Plate (Wood)",emoji:"⬛",station:"table",yields:"1",grid:["","","","🪵","🪵","","","",""],ingredients:"2 Wood Planks (side by side)"},
+  {cat:"redstone",name:"Pressure Plate (Gold)",emoji:"⬛",station:"table",yields:"1",grid:["","","","🥇","🥇","","","",""],ingredients:"2 Gold Ingots — triggers from 1 entity"},
+  {cat:"redstone",name:"Pressure Plate (Iron)",emoji:"⬛",station:"table",yields:"1",grid:["","","","🔩","🔩","","","",""],ingredients:"2 Iron Ingots — triggers from many entities"},
+  {cat:"redstone",name:"Redstone Repeater",emoji:"🔁",station:"table",yields:"1",grid:["","","","🔴","🔴","🔴","🪨","🪨","🪨"],ingredients:"2 Redstone Torches + 1 Redstone Dust + 3 Stone"},
+  {cat:"redstone",name:"Redstone Comparator",emoji:"🔁",station:"table",yields:"1",grid:["","🔴","","🔴","🔶","🔴","🪨","🪨","🪨"],ingredients:"3 Redstone Torches + 1 Nether Quartz + 3 Stone"},
+  {cat:"redstone",name:"Observer",emoji:"👁️",station:"table",yields:"1",grid:["🪨","🪨","🪨","🔴","🪹","🪹","🪨","🔶","🪨"],ingredients:"6 Cobblestone + 2 Redstone Dust + 1 Nether Quartz"},
+  {cat:"redstone",name:"Daylight Detector",emoji:"🌞",station:"table",yields:"1",grid:["🔷","🔷","🔷","🪹","🪹","🪹","🔴","🔴","🔴"],ingredients:"3 Glass + 3 Nether Quartz + 3 Wood Slabs"},
+  {cat:"redstone",name:"Tripwire Hook",emoji:"🪤",station:"table",yields:"2",grid:["🔩","","","🪹","","","🪵","",""],ingredients:"1 Iron Ingot + 1 Stick + 1 Wood Plank"},
+  {cat:"redstone",name:"Note Block",emoji:"🎵",station:"table",yields:"1",grid:["🪵","🪵","🪵","🪵","🔴","🪵","🪵","🪵","🪵"],ingredients:"8 Wood Planks + 1 Redstone Dust"},
+  {cat:"redstone",name:"Jukebox",emoji:"📀",station:"table",yields:"1",grid:["🪵","🪵","🪵","🪵","💎","🪵","🪵","🪵","🪵"],ingredients:"8 Wood Planks + 1 Diamond"},
+  {cat:"redstone",name:"Rail",emoji:"🛤️",station:"table",yields:"16",grid:["🔩","","🔩","🔩","🪹","🔩","🔩","","🔩"],ingredients:"6 Iron Ingots + 1 Stick"},
+  {cat:"redstone",name:"Powered Rail",emoji:"🛤️",station:"table",yields:"6",grid:["🥇","","🥇","🥇","🪹","🥇","🥇","🔴","🥇"],ingredients:"6 Gold Ingots + 1 Stick + 1 Redstone Dust"},
+  {cat:"redstone",name:"Detector Rail",emoji:"🛤️",station:"table",yields:"6",grid:["🔩","","🔩","🔩","⬛","🔩","🔩","🔴","🔩"],ingredients:"6 Iron Ingots + 1 Stone Pressure Plate + 1 Redstone Dust"},
+  {cat:"redstone",name:"Activator Rail",emoji:"🛤️",station:"table",yields:"6",grid:["🔩","🪹","🔩","🔩","🔴","🔩","🔩","🪹","🔩"],ingredients:"6 Iron Ingots + 2 Sticks + 1 Redstone Torch"},
+  {cat:"redstone",name:"Minecart",emoji:"🚃",station:"table",yields:"1",grid:["","","","🔩","","🔩","🔩","🔩","🔩"],ingredients:"5 Iron Ingots (U-shape)"},
+  {cat:"redstone",name:"Minecart with Chest",emoji:"🚃",station:"table",yields:"1",grid:["","","","📦","","","🚃","",""],ingredients:"1 Chest + 1 Minecart",note:"Shapeless"},
+  {cat:"redstone",name:"Minecart with Furnace",emoji:"🚃",station:"table",yields:"1",grid:["","","","🔥","","","🚃","",""],ingredients:"1 Furnace + 1 Minecart",note:"Shapeless"},
+  {cat:"redstone",name:"Minecart with Hopper",emoji:"🚃",station:"table",yields:"1",grid:["","","","🔽","","","🚃","",""],ingredients:"1 Hopper + 1 Minecart",note:"Shapeless"},
+  {cat:"redstone",name:"Minecart with TNT",emoji:"🚃",station:"table",yields:"1",grid:["","","","💥","","","🚃","",""],ingredients:"1 TNT + 1 Minecart",note:"Shapeless"},
+  {cat:"redstone",name:"Lightning Rod",emoji:"⚡",station:"table",yields:"1",grid:["","🟠","","","🟠","","","🟠",""],ingredients:"3 Copper Ingots (vertical stack)"},
+  {cat:"redstone",name:"Sculk Sensor",emoji:"📡",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in deep dark biomes"},
+  {cat:"redstone",name:"Calibrated Sculk Sensor",emoji:"📡",station:"table",yields:"1",grid:["","🟠","","🟠","📡","🟠","","",""],ingredients:"3 Copper Ingots + 1 Sculk Sensor"},
+
+  /* ── UTILITY ── */
+  {cat:"utility",name:"Bed (any color)",emoji:"🛏️",station:"table",yields:"1",grid:["","","","🐑","🐑","🐑","🪵","🪵","🪵"],ingredients:"3 Wool (any matching color) + 3 Wood Planks"},
+  {cat:"utility",name:"Ladder",emoji:"🪜",station:"table",yields:"3",grid:["🪹","","🪹","🪹","🪹","🪹","🪹","","🪹"],ingredients:"7 Sticks (H-shape)"},
+  {cat:"utility",name:"Scaffolding",emoji:"🪜",station:"table",yields:"6",grid:["🎋","🪢","🎋","🎋","","🎋","🎋","","🎋"],ingredients:"6 Bamboo + 1 String"},
+  {cat:"utility",name:"Boat",emoji:"🚣",station:"table",yields:"1",grid:["","","","🪵","","🪵","🪵","🪵","🪵"],ingredients:"5 Wood Planks (matching type) + 1 Wooden Shovel",note:"No shovel needed since 1.9; just 5 matching planks"},
+  {cat:"utility",name:"Saddle",emoji:"🐴",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in chests (dungeons, temples, bastions, etc.)"},
+  {cat:"utility",name:"Lead",emoji:"🪢",station:"table",yields:"2",grid:["🪢","🪢","","🪢","🟢","","","","🪢"],ingredients:"4 String + 1 Slimeball"},
+  {cat:"utility",name:"Name Tag",emoji:"🏷️",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in dungeon/mineshaft/mansion chests or fishing"},
+  {cat:"utility",name:"Book",emoji:"📚",station:"crafting",yields:"1",grid:["","","","📜","🦌","","","",""],ingredients:"3 Paper + 1 Leather",note:"Shapeless"},
+  {cat:"utility",name:"Paper",emoji:"📜",station:"table",yields:"3",grid:["","","","🎋","🎋","🎋","","",""],ingredients:"3 Sugar Cane (in a row)"},
+  {cat:"utility",name:"Book and Quill",emoji:"📖",station:"crafting",yields:"1",grid:["","","","📚","🪶","","","🦑",""],ingredients:"1 Book + 1 Feather + 1 Ink Sac",note:"Shapeless"},
+  {cat:"utility",name:"Map",emoji:"🗺️",station:"table",yields:"1",grid:["📜","📜","📜","📜","🧭","📜","📜","📜","📜"],ingredients:"8 Paper + 1 Compass"},
+  {cat:"utility",name:"Empty Map",emoji:"🗺️",station:"table",yields:"1",grid:["","","","📜","📜","📜","","",""],ingredients:"9 Paper — no compass needed for a blank locator map"},
+  {cat:"utility",name:"Bucket",emoji:"🪣",station:"table",yields:"1",grid:["🔩","","🔩","","🔩","","","",""],ingredients:"3 Iron Ingots (V-shape)"},
+  {cat:"utility",name:"Armor Stand",emoji:"🪆",station:"table",yields:"1",grid:["🪹","🪹","🪹","","🪹","","🪹","🪨","🪹"],ingredients:"6 Sticks + 1 Stone Slab"},
+  {cat:"utility",name:"Item Frame",emoji:"🖼️",station:"table",yields:"1",grid:["🦌","🦌","🦌","🦌","🦌","🦌","🦌","🦌","🦌"],ingredients:"8 Sticks + 1 Leather (sticks in border, leather center)",note:"8 sticks around the edge + 1 leather in center"},
+  {cat:"utility",name:"Glow Item Frame",emoji:"🖼️",station:"crafting",yields:"1",grid:["","🌟","","","🖼️","","","",""],ingredients:"1 Item Frame + 1 Glow Ink Sac",note:"Shapeless"},
+  {cat:"utility",name:"Painting",emoji:"🖼️",station:"table",yields:"1",grid:["🪹","🪹","🪹","🪹","🪢","🪹","🪹","🪹","🪹"],ingredients:"8 Sticks + 1 Wool (any color, center)"},
+  {cat:"utility",name:"Flower Pot",emoji:"🪴",station:"table",yields:"1",grid:["","🔴","","🔴","","🔴","","",""],ingredients:"3 Bricks (V-shape)"},
+  {cat:"utility",name:"Chiseled Bookshelf",emoji:"📚",station:"table",yields:"1",grid:["🪵","🪵","🪵","📋","📋","📋","🪵","🪵","🪵"],ingredients:"6 Wood Planks + 3 Wood Slabs"},
+  {cat:"utility",name:"Bundle",emoji:"🎒",station:"table",yields:"1",grid:["🪢","🦌","🪢","🦌","","🦌","🦌","🦌","🦌"],ingredients:"6 Leather + 2 String"},
+  {cat:"utility",name:"Decorated Pot",emoji:"🏺",station:"table",yields:"1",grid:["","🏺","","🏺","","🏺","","🏺",""],ingredients:"4 Pottery Sherds OR Bricks (any combination)",note:"Any sherd/brick in diamond pattern (no center)"},
+
+  /* ── DECORATIVE ── */
+  {cat:"decorative",name:"Stairs (Wood)",emoji:"🪵",station:"table",yields:"4",grid:["🪵","","","🪵","🪵","","🪵","🪵","🪵"],ingredients:"6 Wood Planks (staircase pattern)"},
+  {cat:"decorative",name:"Slab (Wood)",emoji:"🪵",station:"table",yields:"6",grid:["","","","🪵","🪵","🪵","","",""],ingredients:"3 Wood Planks (in a row)"},
+  {cat:"decorative",name:"Fence (Wood)",emoji:"🌲",station:"table",yields:"3",grid:["","","","🪵","🪹","🪵","🪵","🪹","🪵"],ingredients:"4 Wood Planks + 2 Sticks"},
+  {cat:"decorative",name:"Fence Gate",emoji:"🚪",station:"table",yields:"1",grid:["","","","🪹","🪵","🪹","🪹","🪵","🪹"],ingredients:"2 Wood Planks + 4 Sticks"},
+  {cat:"decorative",name:"Door (Wood)",emoji:"🚪",station:"table",yields:"3",grid:["🪵","🪵","","🪵","🪵","","🪵","🪵",""],ingredients:"6 Wood Planks (2 columns)"},
+  {cat:"decorative",name:"Door (Iron)",emoji:"🚪",station:"table",yields:"3",grid:["🔩","🔩","","🔩","🔩","","🔩","🔩",""],ingredients:"6 Iron Ingots (2 columns)"},
+  {cat:"decorative",name:"Trapdoor (Wood)",emoji:"⬛",station:"table",yields:"2",grid:["","","","🪵","🪵","🪵","🪵","🪵","🪵"],ingredients:"6 Wood Planks (2 rows)"},
+  {cat:"decorative",name:"Trapdoor (Iron)",emoji:"⬛",station:"table",yields:"1",grid:["🔩","🔩","🔩","🔩","🔩","🔩","","",""],ingredients:"6 Iron Ingots (2 rows)"},
+  {cat:"decorative",name:"Sign (Wood)",emoji:"🪧",station:"table",yields:"3",grid:["🪵","🪵","🪵","🪵","🪵","🪵","","🪹",""],ingredients:"6 Wood Planks + 1 Stick"},
+  {cat:"decorative",name:"Sign (Hanging)",emoji:"🪧",station:"table",yields:"2",grid:["","🔗","🔗","🪵","🪵","🪵","","",""],ingredients:"2 Chains + 6 Wood Planks"},
+  {cat:"decorative",name:"Banner",emoji:"🚩",station:"table",yields:"1",grid:["🐑","🐑","🐑","🐑","🐑","🐑","","🪹",""],ingredients:"6 Wool (matching color) + 1 Stick"},
+  {cat:"decorative",name:"Carpet",emoji:"🟥",station:"table",yields:"3",grid:["","","","🐑","🐑","","","",""],ingredients:"2 Wool (same color, side by side)"},
+  {cat:"decorative",name:"Wool Block",emoji:"🐑",station:"crafting",yields:"1",grid:["","","","🐑","🐑","","🐑","🐑",""],ingredients:"4 String (2×2) → White Wool"},
+  {cat:"decorative",name:"Concrete Powder",emoji:"🟦",station:"crafting",yields:"8",grid:["🎨","🏖️","🏖️","🏖️","🏖️","🪨","🏖️","🪨","🪨"],ingredients:"1 Dye + 4 Sand + 4 Gravel (any arrangement)",note:"Shapeless. Hardens into Concrete when touched by water."},
+  {cat:"decorative",name:"Terracotta (dyed)",emoji:"🟫",station:"table",yields:"8",grid:["🟫","🟫","🟫","🟫","🎨","🟫","🟫","🟫","🟫"],ingredients:"8 Terracotta + 1 Dye (center)"},
+  {cat:"decorative",name:"Stained Glass",emoji:"🔷",station:"table",yields:"8",grid:["🔷","🔷","🔷","🔷","🎨","🔷","🔷","🔷","🔷"],ingredients:"8 Glass + 1 Dye (center)"},
+  {cat:"decorative",name:"Jack o'Lantern",emoji:"🎃",station:"table",yields:"1",grid:["","","","🎃","","","","🕯️",""],ingredients:"1 Carved Pumpkin + 1 Torch",note:"Shapeless"},
+  {cat:"decorative",name:"Snowball",emoji:"⛄",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — punch snow with shovel"},
+  {cat:"decorative",name:"Snow Block",emoji:"⬜",station:"crafting",yields:"1",grid:["","","","⛄","⛄","","⛄","⛄",""],ingredients:"4 Snowballs (2×2)"},
+  {cat:"decorative",name:"Ice",emoji:"🧊",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — found in frozen biomes (mine with Silk Touch)"},
+  {cat:"decorative",name:"Mud Bricks",emoji:"🟫",station:"table",yields:"4",grid:["","","","🟫","🟫","","🟫","🟫",""],ingredients:"4 Packed Mud (2×2)"},
+  {cat:"decorative",name:"Packed Mud",emoji:"🟫",station:"crafting",yields:"1",grid:["","","","🟫","🌿","","","",""],ingredients:"1 Mud + 1 Wheat",note:"Shapeless"},
+  {cat:"decorative",name:"Candle",emoji:"🕯️",station:"table",yields:"1",grid:["","","","","🐝","","","🪢",""],ingredients:"1 Honeycomb + 1 String"},
+  {cat:"decorative",name:"Chain",emoji:"🔗",station:"table",yields:"1",grid:["","🔗","","","🔩","","","🔗",""],ingredients:"2 Iron Nuggets + 1 Iron Ingot (vertical)"},
+  {cat:"decorative",name:"End Rod",emoji:"🕯️",station:"table",yields:"4",grid:["","🔷","","","💫","","","",""],ingredients:"1 Blaze Rod + 1 Popped Chorus Fruit"},
+  {cat:"decorative",name:"Copper Bulb",emoji:"💡",station:"table",yields:"4",grid:["","🟠","","🟠","⚡","🟠","","🪹",""],ingredients:"3 Copper Blocks + 1 Blaze Rod + 1 Redstone Dust",note:"Use waxed copper variant for permanent state"},
+  {cat:"decorative",name:"Tuff Bricks",emoji:"🪨",station:"table",yields:"4",grid:["","","","🪨","🪨","","🪨","🪨",""],ingredients:"4 Polished Tuff (2×2)"},
+
+  /* ── MISC ── */
+  {cat:"misc",name:"Eye of Ender",emoji:"👁️",station:"crafting",yields:"1",grid:["","","","","🔥","🟢","","",""],ingredients:"1 Blaze Powder + 1 Ender Pearl",note:"Shapeless. Used to find strongholds & fill portal frames."},
+  {cat:"misc",name:"Blaze Powder",emoji:"🔥",station:"crafting",yields:"2",grid:["","","","","🔥","","","",""],ingredients:"1 Blaze Rod → 2 Blaze Powder"},
+  {cat:"misc",name:"Magma Cream",emoji:"🟢",station:"crafting",yields:"1",grid:["","","","","🟤","🟢","","",""],ingredients:"1 Blaze Powder + 1 Slimeball",note:"Shapeless"},
+  {cat:"misc",name:"Fermented Spider Eye",emoji:"🕷️",station:"crafting",yields:"1",grid:["","","","🍄","🕷️","🍯","","",""],ingredients:"1 Brown Mushroom + 1 Spider Eye + 1 Sugar",note:"Shapeless. Used in potion brewing."},
+  {cat:"misc",name:"Glistering Melon",emoji:"🍈",station:"table",yields:"1",grid:["🟡","🟡","🟡","🟡","🍈","🟡","🟡","🟡","🟡"],ingredients:"8 Gold Nuggets + 1 Melon Slice",note:"Brewing ingredient for healing potions"},
+  {cat:"misc",name:"Fire Charge",emoji:"🔥",station:"crafting",yields:"3",grid:["","","","🔥","💥","🪨","","",""],ingredients:"1 Blaze Powder + 1 Gunpowder + 1 Coal/Charcoal",note:"Shapeless"},
+  {cat:"misc",name:"Ender Pearl",emoji:"🟢",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — dropped by Endermen"},
+  {cat:"misc",name:"Nether Star",emoji:"⭐",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — dropped by the Wither boss"},
+  {cat:"misc",name:"Netherite Ingot",emoji:"⬛",station:"crafting",yields:"1",grid:["🟤","🟤","🟤","🟤","🥇","🥇","🥇","🥇",""],ingredients:"4 Netherite Scraps + 4 Gold Ingots",note:"Shapeless. Netherite scraps come from smelting ancient debris."},
+  {cat:"misc",name:"Netherite Scrap",emoji:"⬛",station:"furnace",yields:"1",grid:["","","","","","","","",""],ingredients:"Smelt 1 Ancient Debris → 1 Netherite Scrap"},
+  {cat:"misc",name:"Iron Nugget",emoji:"🔗",station:"crafting",yields:"9",grid:["","","","","🔩","","","",""],ingredients:"1 Iron Ingot → 9 Iron Nuggets"},
+  {cat:"misc",name:"Gold Nugget",emoji:"🟡",station:"crafting",yields:"9",grid:["","","","","🥇","","","",""],ingredients:"1 Gold Ingot → 9 Gold Nuggets"},
+  {cat:"misc",name:"Block of Iron",emoji:"🔳",station:"crafting",yields:"1",grid:["🔩","🔩","🔩","🔩","🔩","🔩","🔩","🔩","🔩"],ingredients:"9 Iron Ingots (3×3)"},
+  {cat:"misc",name:"Block of Gold",emoji:"🟨",station:"crafting",yields:"1",grid:["🥇","🥇","🥇","🥇","🥇","🥇","🥇","🥇","🥇"],ingredients:"9 Gold Ingots (3×3)"},
+  {cat:"misc",name:"Block of Diamond",emoji:"💎",station:"crafting",yields:"1",grid:["💎","💎","💎","💎","💎","💎","💎","💎","💎"],ingredients:"9 Diamonds (3×3)"},
+  {cat:"misc",name:"Block of Emerald",emoji:"💚",station:"crafting",yields:"1",grid:["💚","💚","💚","💚","💚","💚","💚","💚","💚"],ingredients:"9 Emeralds (3×3)"},
+  {cat:"misc",name:"Block of Coal",emoji:"⬛",station:"crafting",yields:"1",grid:["🪨","🪨","🪨","🪨","🪨","🪨","🪨","🪨","🪨"],ingredients:"9 Coal (3×3)"},
+  {cat:"misc",name:"Block of Quartz",emoji:"⬜",station:"crafting",yields:"1",grid:["⬜","⬜","⬜","⬜","⬜","⬜","⬜","⬜","⬜"],ingredients:"9 Nether Quartz (3×3)"},
+  {cat:"misc",name:"Block of Redstone",emoji:"🔴",station:"crafting",yields:"1",grid:["🔴","🔴","🔴","🔴","🔴","🔴","🔴","🔴","🔴"],ingredients:"9 Redstone Dust (3×3)"},
+  {cat:"misc",name:"Block of Amethyst",emoji:"💜",station:"crafting",yields:"1",grid:["💜","💜","💜","💜","💜","💜","💜","💜","💜"],ingredients:"4 Amethyst Shards (2×2)"},
+  {cat:"misc",name:"Nether Brick (block)",emoji:"🔴",station:"furnace",yields:"1",grid:["","","","","","","","",""],ingredients:"Smelt 1 Netherrack → 1 Nether Brick item; then 4 items → 1 Nether Brick block"},
+  {cat:"misc",name:"Bone Meal",emoji:"⬜",station:"crafting",yields:"3",grid:["","","","","🦴","","","",""],ingredients:"1 Bone → 3 Bone Meal"},
+  {cat:"misc",name:"Bone Block",emoji:"🦴",station:"crafting",yields:"1",grid:["🦴","🦴","🦴","🦴","🦴","🦴","🦴","🦴","🦴"],ingredients:"9 Bone Meal (3×3)"},
+  {cat:"misc",name:"String",emoji:"🪢",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — from spiders, cats (tame drops), cobwebs (shears)"},
+  {cat:"misc",name:"Phantom Membrane",emoji:"👻",station:"none",yields:"—",grid:["","","","","","","","",""],ingredients:"Cannot be crafted — dropped by phantoms"},
+  {cat:"misc",name:"Dragon's Breath",emoji:"🟣",station:"none",yields:"1",grid:["","","","","","","","",""],ingredients:"Right-click the Ender Dragon's breath cloud with empty glass bottle"},
+  {cat:"misc",name:"Potion of Water Breathing",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Pufferfish + Awkward Potion in Brewing Stand"},
+  {cat:"misc",name:"Awkward Potion",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Nether Wart + Water Bottle in Brewing Stand",note:"Base for almost all potions"},
+  {cat:"misc",name:"Potion of Fire Resistance",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Magma Cream + Awkward Potion"},
+  {cat:"misc",name:"Potion of Strength",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Blaze Powder + Awkward Potion"},
+  {cat:"misc",name:"Potion of Healing",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Glistering Melon + Awkward Potion"},
+  {cat:"misc",name:"Potion of Night Vision",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Golden Carrot + Awkward Potion"},
+  {cat:"misc",name:"Potion of Invisibility",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Fermented Spider Eye + Night Vision Potion"},
+  {cat:"misc",name:"Potion of Slow Falling",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Phantom Membrane + Awkward Potion"},
+  {cat:"misc",name:"Potion of Speed",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Sugar + Awkward Potion"},
+  {cat:"misc",name:"Splash Potion",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Gunpowder + Any Potion (in Brewing Stand)"},
+  {cat:"misc",name:"Lingering Potion",emoji:"⚗️",station:"brewing",yields:"1",grid:["","","","","","","","",""],ingredients:"Dragon's Breath + Any Splash Potion"},
+  {cat:"misc",name:"Tipped Arrow",emoji:"🏹",station:"table",yields:"8",grid:["🏹","🏹","🏹","🏹","⚗️","🏹","🏹","🏹","🏹"],ingredients:"8 Arrows + 1 Lingering Potion (any)"},
+  {cat:"misc",name:"End Crystal",emoji:"💎",station:"table",yields:"1",grid:["🔷","🔷","🔷","🔷","👁️","🔷","","💎",""],ingredients:"7 Glass + 1 Eye of Ender + 1 Ghast Tear"},
+  {cat:"misc",name:"Firework Rocket",emoji:"🎆",station:"crafting",yields:"3",grid:["","","","💥","📜","","","",""],ingredients:"1 Gunpowder + 1 Paper (+ optional Firework Star for effects)",note:"Shapeless. More gunpowder = longer flight duration (up to 3)."},
+  {cat:"misc",name:"Firework Star",emoji:"🌟",station:"crafting",yields:"1",grid:["","","","💥","🎨","","","",""],ingredients:"1 Gunpowder + 1 Dye (+ optional shape items like Fire Charge, Gold Nugget, etc.)",note:"Shapeless"},
+];
+
+/* ═══════════════════════════════════════════
+   CHECKLIST RENDERING
+═══════════════════════════════════════════ */
+const total=phases.reduce((s,p)=>s+p.items.length,0);
+function countDone(){return Object.values(checked).filter(Boolean).length;}
+function ikey(pi,ii){return pi+'_'+ii;}
+function updateProgress(){
+  const done=countDone();
+  document.getElementById('bar').style.width=(done/total*100)+'%';
+  document.getElementById('prog').textContent=done+' / '+total;
+}
+let activeFilter='all';
+function renderChecklist(){
+  const wrap=document.getElementById('listWrap');
+  const frag=document.createDocumentFragment();
+  let any=false;
+  phases.forEach((phase,pi)=>{
+    const vis=phase.items.filter((item,ii)=>{
+      const k=ikey(pi,ii);
+      if(activeFilter==='remaining')return !checked[k];
+      if(activeFilter==='done')return !!checked[k];
+      if(activeFilter==='challenge')return item.t==='challenge';
+      if(activeFilter==='goal')return item.t==='goal';
+      if(activeFilter==='hidden')return item.t==='hidden';
+      return true;
+    });
+    if(!vis.length)return;
+    any=true;
+    const ph=document.createElement('div');ph.className='phase-hd';ph.textContent=phase.label;frag.appendChild(ph);
+    vis.forEach(item=>{
+      const ii=phase.items.indexOf(item);
+      const k=ikey(pi,ii);
+      const isDone=!!checked[k];
+      const div=document.createElement('div');div.className='item';
+      const cb=document.createElement('div');cb.className='cb'+(isDone?' done':'');
+      const body=document.createElement('div');body.className='item-body';
+      const nr=document.createElement('div');nr.className='item-name'+(isDone?' done-text':'');
+      nr.appendChild(document.createTextNode(item.n));
+      if(item.t==='challenge'){const b=document.createElement('span');b.className='badge b-c';b.textContent='Challenge';nr.appendChild(b);}
+      else if(item.t==='goal'){const b=document.createElement('span');b.className='badge b-g';b.textContent='Goal';nr.appendChild(b);}
+      else if(item.t==='hidden'){const b=document.createElement('span');b.className='badge b-h';b.textContent='Hidden';nr.appendChild(b);}
+      const hint=document.createElement('div');hint.className='item-hint'+(isDone?' done-text':'');hint.textContent=item.h;
+      body.appendChild(nr);body.appendChild(hint);div.appendChild(cb);div.appendChild(body);
+      div.addEventListener('click',()=>{
+        checked[k]=!checked[k];saveAdv();
+        cb.className='cb'+(checked[k]?' done':'');
+        nr.className='item-name'+(checked[k]?' done-text':'');
+        hint.className='item-hint'+(checked[k]?' done-text':'');
+        updateProgress();
+      });
+      frag.appendChild(div);
+    });
+  });
+  if(!any){const e=document.createElement('div');e.className='empty';e.innerHTML='<div style="font-size:28px;margin-bottom:8px">🎉</div>All done!';frag.appendChild(e);}
+  wrap.innerHTML='';wrap.appendChild(frag);updateProgress();
+}
+document.querySelector('.filters').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-f]');if(!btn)return;
+  activeFilter=btn.dataset.f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderChecklist();
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Reset ALL progress?'))return;
+  checked={};reqChecked={};saveAdv();saveReq();renderChecklist();renderGuide('');
+});
+
+/* ═══════════════════════════════════════════
+   CHALLENGE GUIDE RENDERING
+═══════════════════════════════════════════ */
+function diffPill(d){
+  if(d==='hard')return '<span class="diff-pill diff-hard">Hard</span>';
+  if(d==='medium')return '<span class="diff-pill diff-medium">Medium</span>';
+  return '<span class="diff-pill diff-easy">Easy</span>';
+}
+function renderGuide(query){
+  const wrap=document.getElementById('guideWrap');
+  const q=(query||'').toLowerCase().trim();
+  const frag=document.createDocumentFragment();
+  let any=false;
+  challenges.forEach(ch=>{
+    if(q&&!ch.name.toLowerCase().includes(q)&&!ch.desc.toLowerCase().includes(q))return;
+    any=true;
+    const dc=ch.reqs.filter(r=>reqChecked[r.id]).length;
+    const allDone=dc===ch.reqs.length;
+    const card=document.createElement('div');card.className='chal-card';
+    const hdr=document.createElement('div');hdr.className='chal-header';
+    const ccb=document.createElement('div');ccb.className='c-cb'+(allDone?' done':'');
+    const tw=document.createElement('div');tw.className='c-title-wrap';
+    tw.innerHTML='<div class="c-title">'+ch.name+'</div><div class="c-meta"><span>'+dc+'/'+ch.reqs.length+' items</span>'+diffPill(ch.diff)+'</div>';
+    const chev=document.createElement('div');chev.className='chev';chev.textContent='▼';
+    hdr.appendChild(ccb);hdr.appendChild(tw);hdr.appendChild(chev);
+    const body=document.createElement('div');body.className='chal-body';
+    const desc=document.createElement('div');desc.className='c-desc';desc.textContent=ch.desc;body.appendChild(desc);
+    const rt=document.createElement('div');rt.className='sec-title';rt.textContent='What you need';body.appendChild(rt);
+    const ul=document.createElement('ul');ul.className='req-list';
+    ch.reqs.forEach(r=>{
+      const li=document.createElement('li');
+      const rcb=document.createElement('div');rcb.className='r-cb'+(reqChecked[r.id]?' done':'');
+      const rt2=document.createElement('span');rt2.className='r-text'+(reqChecked[r.id]?' done-text':'');rt2.textContent=r.text;
+      li.appendChild(rcb);li.appendChild(rt2);
+      li.addEventListener('click',ev=>{
+        ev.stopPropagation();reqChecked[r.id]=!reqChecked[r.id];saveReq();
+        rcb.className='r-cb'+(reqChecked[r.id]?' done':'');
+        rt2.className='r-text'+(reqChecked[r.id]?' done-text':'');
+        const nd=ch.reqs.filter(x=>reqChecked[x.id]).length;
+        tw.querySelector('.c-meta').innerHTML='<span>'+nd+'/'+ch.reqs.length+' items</span>'+diffPill(ch.diff);
+        ccb.className='c-cb'+(nd===ch.reqs.length?' done':'');
+      });
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if(ch.tip){const tip=document.createElement('div');tip.className='tip-box';tip.innerHTML='<strong>Tip:</strong> '+ch.tip;body.appendChild(tip);}
+    hdr.addEventListener('click',()=>{const o=body.classList.contains('open');body.classList.toggle('open',!o);chev.classList.toggle('open',!o);});
+    card.appendChild(hdr);card.appendChild(body);frag.appendChild(card);
+  });
+  if(!any){const e=document.createElement('div');e.className='empty';e.textContent='No results.';frag.appendChild(e);}
+  wrap.innerHTML='';wrap.appendChild(frag);
+}
+document.getElementById('guideSearch').addEventListener('input',e=>renderGuide(e.target.value));
+
+/* ═══════════════════════════════════════════
+   CRAFTING REFERENCE RENDERING
+═══════════════════════════════════════════ */
+const stationLabel={
+  crafting:'Inventory / Crafting Table',table:'Crafting Table (3×3)',
+  furnace:'Furnace',smoker:'Smoker',blast:'Blast Furnace',
+  smithing:'Smithing Table',stonecutter:'Stonecutter',
+  brewing:'Brewing Stand',none:'Not craftable'
+};
+const stationEmoji={
+  crafting:'🪵',table:'🪵',furnace:'🔥',smoker:'💨',blast:'🔥',
+  smithing:'🔨',stonecutter:'🪨',brewing:'⚗️',none:'❌'
+};
+let activeCraftCat='all';
+function renderCrafting(query){
+  const wrap=document.getElementById('craftWrap');
+  const q=(query||'').toLowerCase().trim();
+  const frag=document.createDocumentFragment();
+  const cats=Object.keys(craftCats);
+  let anyGlobal=false;
+  cats.forEach(cat=>{
+    if(activeCraftCat!=='all'&&activeCraftCat!==cat)return;
+    const items=recipes.filter(r=>{
+      if(r.cat!==cat)return false;
+      if(q&&!r.name.toLowerCase().includes(q)&&!(r.ingredients||'').toLowerCase().includes(q))return false;
+      return true;
+    });
+    if(!items.length)return;
+    anyGlobal=true;
+    const hd=document.createElement('div');hd.className='craft-section-hd';hd.textContent=craftCats[cat];frag.appendChild(hd);
+    items.forEach(r=>{
+      const card=document.createElement('div');card.className='craft-card';
+      const hdr=document.createElement('div');hdr.className='craft-hdr';
+      const em=document.createElement('div');em.className='craft-emoji';em.textContent=r.emoji;
+      const nw=document.createElement('div');nw.className='craft-name-wrap';
+      nw.innerHTML='<div class="craft-name">'+r.name+'</div><div class="craft-yields">Yields: '+r.yields+(r.station!=='none'?' · '+stationEmoji[r.station]+' '+stationLabel[r.station]:'')+'</div>';
+      const chev=document.createElement('div');chev.className='chev';chev.textContent='▼';
+      hdr.appendChild(em);hdr.appendChild(nw);hdr.appendChild(chev);
+      const body=document.createElement('div');body.className='craft-body';
+      /* station */
+      const sta=document.createElement('div');sta.className='craft-station';
+      sta.textContent=stationEmoji[r.station]+' '+stationLabel[r.station];body.appendChild(sta);
+      /* grid + result */
+      if(r.station!=='none'&&r.station!=='brewing'&&r.station!=='smithing'){
+        const gw=document.createElement('div');gw.className='craft-grid-wrap';
+        const grid=document.createElement('div');
+        const cols=r.station==='crafting'?2:3;
+        grid.style.cssText='display:grid;grid-template-columns:repeat('+cols+',1fr);gap:4px;max-width:'+(cols===2?120:180)+'px';
+        const cells=(r.station==='crafting')?[r.grid[3],r.grid[4],r.grid[6],r.grid[7]]:r.grid;
+        cells.forEach(c=>{
+          const cell=document.createElement('div');
+          cell.className='craft-cell'+(c?' filled':'');
+          cell.style.cssText='height:44px;border:0.5px solid var(--border2);border-radius:6px;background:'+(c?'var(--bg3)':'var(--bg)')+';display:flex;align-items:center;justify-content:center;font-size:20px';
+          cell.textContent=c||'';grid.appendChild(cell);
+        });
+        gw.appendChild(grid);
+        const arr=document.createElement('div');arr.className='craft-arrow';arr.textContent='→';gw.appendChild(arr);
+        const res=document.createElement('div');res.className='craft-result';
+        res.innerHTML='<div class="craft-result-cell">'+r.emoji+'</div><div class="craft-result-label">'+r.name+'</div><div class="craft-result-qty">×'+r.yields+'</div>';
+        gw.appendChild(res);body.appendChild(gw);
+      }
+      /* ingredients text */
+      const ing=document.createElement('div');ing.className='craft-ingredients';
+      ing.innerHTML='<strong>Ingredients:</strong> '+r.ingredients;body.appendChild(ing);
+      if(r.note){const n=document.createElement('div');n.className='craft-note';n.textContent='Note: '+r.note;body.appendChild(n);}
+      hdr.addEventListener('click',()=>{const o=body.classList.contains('open');body.classList.toggle('open',!o);chev.classList.toggle('open',!o);});
+      card.appendChild(hdr);card.appendChild(body);frag.appendChild(card);
+    });
+  });
+  if(!anyGlobal){const e=document.createElement('div');e.className='empty';e.textContent='No recipes found.';frag.appendChild(e);}
+  wrap.innerHTML='';wrap.appendChild(frag);
+}
+document.getElementById('craftSearch').addEventListener('input',e=>renderCrafting(e.target.value));
+document.getElementById('craftFilters').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-cf]');if(!btn)return;
+  activeCraftCat=btn.dataset.cf;
+  document.querySelectorAll('[data-cf]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCrafting(document.getElementById('craftSearch').value);
+});
+
+/* ═══════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════ */
+document.querySelector('.tab-bar').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-tab]');if(!btn)return;
+  const tab=btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+tab).classList.add('active');
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+renderChecklist();
+renderGuide('');
+renderCrafting('');
+</script>
+</body>
+</html>
